@@ -145,13 +145,14 @@ sifce/
       styles/            estilos globales y colores de las gráficas
       api/, context/     cliente Axios y sesión
       routes/, hooks/, utils/, constants/
+  deploy/              docker-stack.yml (Swarm), nginx.conf, deploy.ps1 y remove.ps1
   docs/
     ARQUITECTURA.md    MVW en carpetas, reglas de dependencia, módulos, seguridad, errores
     MODULO_IA.md       Contrato del módulo de IA e independencia del proveedor
     SEGURIDAD.md       OTP, CAPTCHA y bloqueo por intentos fallidos
     TRAZABILIDAD.md    Matriz RF/RNF → módulo → pantalla → endpoint → tabla → verificación
     PRUEBAS.md         Pruebas manuales + pruebas automáticas (Jest + Supertest) y cómo correrlas
-    DESPLIEGUE.md      Cómo desplegar en distintos entornos
+    DESPLIEGUE.md      Despliegue con Docker Swarm (deploy/) y en otros entornos
   README.md            Este archivo
 ```
 
@@ -206,7 +207,15 @@ npm run dev:web      # terminal 2: interfaz en http://localhost:5173
 npm test             # 101 pruebas de la API (Jest + Supertest) en un schema aparte: no tocan tus datos
 ```
 
-### 6. (Opcional) build de producción de la interfaz
+### 6. Despliegue con Docker Swarm (como en producción)
+
+```powershell
+.\deploy\deploy.ps1    # requiere Docker Desktop; SIFCE queda en http://localhost:8080
+```
+
+Detalle en `docs/DESPLIEGUE.md`.
+
+### 7. (Opcional) build de producción de la interfaz
 
 ```bash
 npm run build:web    # genera view/dist — servible desde cualquier servidor estático

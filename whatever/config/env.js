@@ -1,5 +1,6 @@
 // Carga y valida las variables de entorno usadas por toda la aplicación.
 // Centralizar esto evita valores hardcodeados dispersos por el código (RNF-M2).
+const fs = require('fs');
 const path = require('path');
 
 // Carpeta raíz de la API (whatever/). El .env y la carpeta de hojas de vida se
@@ -9,8 +10,18 @@ const path = require('path');
 const API_ROOT = path.resolve(__dirname, '..');
 require('dotenv').config({ path: path.join(API_ROOT, '.env') });
 
+// Valores sensibles: si existe NOMBRE_FILE, el valor se lee de ese archivo.
+// Así funcionan los "secrets" de Docker Swarm (deploy/docker-stack.yml), que
+// la plataforma monta como archivos en /run/secrets/ en vez de exponerlos
+// como variables de entorno. Sin NOMBRE_FILE se usa la variable normal (.env).
+function fromEnvOrFile(name) {
+  const file = process.env[`${name}_FILE`];
+  if (file) return fs.readFileSync(file, 'utf8').trim();
+  return process.env[name];
+}
+
 function required(name, fallback) {
-  const value = process.env[name] ?? fallback;
+  const value = fromEnvOrFile(name) ?? fallback;
   if (value === undefined) {
     // eslint-disable-next-line no-console
     console.warn(`[config] Variable de entorno "${name}" no está definida.`);
@@ -47,7 +58,7 @@ module.exports = {
   ai: {
     provider: process.env.AI_PROVIDER || 'mock',
     apiUrl: process.env.AI_API_URL || '',
-    apiKey: process.env.AI_API_KEY || '',
+    apiKey: fromEnvOrFile('AI_API_KEY') || '',
     model: process.env.AI_MODEL || '',
   },
 
@@ -69,7 +80,7 @@ module.exports = {
     port: parseInt(process.env.SMTP_PORT || '587', 10),
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
+    pass: fromEnvOrFile('SMTP_PASS') || '',
     from: process.env.SMTP_FROM || 'SIFCE <no-reply@sifce.local>',
   },
 
@@ -80,7 +91,7 @@ module.exports = {
     // el registro funciona igual que antes, sin bloquear la demo por falta
     // de esas claves.
     enabled: process.env.CAPTCHA_ENABLED === 'true',
-    secretKey: process.env.CAPTCHA_SECRET_KEY || '',
+    secretKey: fromEnvOrFile('CAPTCHA_SECRET_KEY') || '',
     siteKey: process.env.CAPTCHA_SITE_KEY || '',
   },
 

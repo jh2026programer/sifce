@@ -4,7 +4,78 @@ El backend y la base de datos son independientes entre sí y de cualquier
 proveedor específico, por lo que pueden desplegarse en distintos entornos
 sin cambios de código — solo variables de entorno.
 
-## Componentes a desplegar
+## Despliegue con Docker Swarm (ciclo de vida, etapa 6 · DEPLOY)
+
+Es el despliegue oficial del proyecto: cada capa corre en su contenedor y
+**Docker Swarm** (orquestador de la diapositiva del curso) los arranca, los
+vigila y los reinicia si fallan.
+
+```
+                 navegador -> http://localhost:8080
+                                  |
++--------------------- Docker Swarm (stack "sifce") ----------------------+
+|  web   nginx: sirve view/ compilada y reenvía /api/ a la API           |
+|  api   Node.js x2 réplicas: Swarm reparte las peticiones entre ellas   |
+|  db    PostgreSQL 16 con volumen persistente (db-data)                 |
+|  seed  tarea de una sola vez: carga los datos demo y termina           |
++-------------------------------------------------------------------------+
+```
+
+### Requisitos
+
+- Docker Desktop (Windows) con el motor encendido ("Engine running").
+
+### Desplegar
+
+```powershell
+.\deploy\deploy.ps1                    # IA en modo mock
+.\deploy\deploy.ps1 -AiProvider groq   # IA real (toma AI_API_KEY de whatever\.env)
+```
+
+El script (unos 30 s cuando las imágenes ya existen):
+1. activa el modo Swarm si hace falta (nodo único);
+2. construye las imágenes `sifce-api` (`whatever/Dockerfile`) y `sifce-web`
+   (`view/Dockerfile`) con la versión de `package.json`;
+3. crea los **secretos de Swarm** la primera vez: contraseña de la base y
+   clave JWT aleatorias, y la clave de IA. La API los lee como archivos
+   (`DB_PASSWORD_FILE`, `JWT_SECRET_FILE`, `AI_API_KEY_FILE`, ver
+   `whatever/config/env.js`); nunca quedan en el código ni en variables visibles;
+4. ejecuta `docker stack deploy -c deploy/docker-stack.yml sifce` y espera
+   a que todo esté estable.
+
+### Detener
+
+```powershell
+.\deploy\remove.ps1                  # detiene el stack, conserva los datos
+.\deploy\remove.ps1 -BorrarDatos     # además borra la base y las hojas de vida del despliegue
+.\deploy\remove.ps1 -BorrarSecretos  # además borra los secretos
+```
+
+### Comandos útiles
+
+```powershell
+docker stack services sifce             # réplicas de cada servicio
+docker service ps sifce_api             # historial de tareas de la API
+docker service logs -f sifce_api        # logs en vivo de las dos réplicas
+docker service scale sifce_api=3        # escalar la API
+```
+
+### Decisiones de diseño
+
+- **Un solo puerto expuesto (8080).** La API y PostgreSQL solo existen en la
+  red interna del stack; desde fuera solo se llega a través de nginx.
+- **Mismo origen.** La interfaz se compila con `VITE_API_URL=/api/v1` y nginx
+  reenvía `/api/` a la API: no hay CORS entre dominios.
+- **Autorreparación y actualizaciones sin caída.** Si una réplica de la API
+  muere, Swarm crea otra (verificado: ~11 s, y la otra réplica siguió
+  atendiendo). Las actualizaciones reemplazan una réplica a la vez
+  (`order: start-first`) y se revierten solas si fallan.
+- **Esquema automático.** `model/schema.sql` se entrega a PostgreSQL como
+  *config* de Swarm y se ejecuta al crear el volumen por primera vez.
+- **Datos independientes del desarrollo.** El stack tiene su propia base
+  (volumen `sifce_db-data`); no toca la base local de `npm run dev:api`.
+
+## Componentes a desplegar (instalación manual, sin Docker)
 
 1. **PostgreSQL** — cualquier instancia 13+ (local, contenedor, o un
    servicio gestionado). Solo se necesita: crear la base de datos, crear un

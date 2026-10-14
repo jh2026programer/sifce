@@ -1,0 +1,120 @@
+# =====================================================================
+# SIFCE en Docker Swarm (ciclo de vida, etapa 6 · DEPLOY)
+#
+# Se despliega con deploy/deploy.ps1, que construye las imágenes, crea los
+# secretos y ejecuta:
+#   docker stack deploy -c deploy/docker-stack.yml sifce
+#
+# Solo el servicio "web" publica un puerto (8080). La API y la base de datos
+# quedan en la red interna del stack, inaccesibles desde fuera.
+# =====================================================================
+version: "3.8"
+
+x-db-env: &db-env
+  DB_HOST: db
+  DB_PORT: "5432"
+  DB_NAME: sifce
+  DB_USER: sifce
+  DB_PASSWORD_FILE: /run/secrets/sifce_db_password
+
+services:
+  # --- MODEL: PostgreSQL --------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sifce
+      POSTGRES_USER: sifce
+      POSTGRES_PASSWORD_FILE: /run/secrets/sifce_db_password
+    secrets:
+      - sifce_db_password
+    configs:
+      # Con el volumen vacío, PostgreSQL ejecuta este archivo al iniciar:
+      # crea todas las tablas de model/schema.sql.
+      - source: sifce_schema
+        target: /docker-entrypoint-initdb.d/01-schema.sql
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sifce -d sifce"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+  # --- Carga de datos demo (se ejecuta, termina y no se reinicia) --------
+  seed:
+    image: sifce-api:${SIFCE_VERSION:-1.0.0}
+    command: ["node", "model/scripts/seed.js"]
+    environment:
+      <<: *db-env
+      AI_PROVIDER: mock
+    secrets:
+      - sifce_db_password
+    volumes:
+      - uploads:/data/uploads
+    deploy:
+      # Tarea de una sola vez (Swarm "job"): corre hasta terminar bien y no se
+      # vuelve a levantar. El seed es idempotente: no duplica datos.
+      mode: replicated-job
+      restart_policy:
+        # Reintenta mientras la base aún no esté lista (creando las tablas).
+        condition: on-failure
+        delay: 5s
+        max_attempts: 15
+
+  # --- WHATEVER: API Express (2 réplicas) ---------------------------------
+  api:
+    image: sifce-api:${SIFCE_VERSION:-1.0.0}
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      PORT: "4000"
+      CORS_ORIGIN: http://localhost:8080
+      JWT_SECRET_FILE: /run/secrets/sifce_jwt_secret
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_API_KEY_FILE: /run/secrets/sifce_ai_api_key
+    secrets:
+      - sifce_db_password
+      - sifce_jwt_secret
+      - sifce_ai_api_key
+    volumes:
+      - uploads:/data/uploads
+    deploy:
+      replicas: 2
+      update_config:
+        # Actualizaciones sin caída: reemplaza una réplica a la vez y arranca
+        # la nueva antes de apagar la vieja.
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: any
+
+  # --- VIEW: interfaz React servida por nginx -----------------------------
+  web:
+    image: sifce-web:${SIFCE_VERSION:-1.0.0}
+    ports:
+      - "8080:80"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+secrets:
+  sifce_db_password:
+    external: true
+  sifce_jwt_secret:
+    external: true
+  sifce_ai_api_key:
+    external: true
+
+configs:
+  sifce_schema:
+    file: ../model/schema.sql
+
+volumes:
+  db-data:
+  uploads:

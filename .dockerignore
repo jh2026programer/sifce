@@ -1,0 +1,14 @@
+# Lo que NUNCA entra a las imágenes Docker (contexto de build = raíz del proyecto)
+**/node_modules
+**/.env
+**/.env.local
+.git
+.circleci
+.claude
+docs
+**/dist
+whatever/uploads
+whatever/tests
+whatever/reports
+coverage
+*.log

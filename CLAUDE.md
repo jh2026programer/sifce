@@ -104,7 +104,7 @@ Tablas: `companies`, `users` (con `failed_login_attempts`, `locked_until`), `log
 
 - Pruebas automáticas solo de la API (101, Jest + Supertest en `whatever/tests/`, `npm test`); sin pruebas automáticas de la interfaz ni E2E.
 - Sin migraciones de BD.
-- No desplegado (solo local). HTTPS preparado pero no configurado.
+- Desplegado solo en el PC del usuario con Docker Swarm (no en la nube). HTTPS no configurado.
 - No probado con servicios reales: reCAPTCHA, SMTP, pruebas de carga, multi-navegador.
 - OTP queda para después (el usuario lo pidió así).
 
@@ -118,7 +118,7 @@ Herramientas elegidas por etapa (a partir de la diapositiva del curso; OPERATE s
 3. BUILD → npm/Vite + **CircleCI** (`.circleci/config.yml`: npm ci, `node --check`, carga de la API, build de view) ✅ (pipeline #1 en verde)
 4. TEST → Jest + Supertest (en vez de JUnit/pytest), corriendo en CircleCI (job `test` con PostgreSQL temporal) ✅. Local: `npm test`, usa el schema `sifce_test` (se recrea por archivo, nunca toca `public`)
 5. RELEASE → tags de Git + GitHub Releases + CHANGELOG (en vez de Nexus/Octopus). Los assets de la Release son los artefactos que fabrica el job build de CircleCI (sifce-web.zip, sifce-api.zip) ✅ Release v1.0.0 publicada (https://github.com/jh2026programer/sifce/releases/tag/v1.0.0, tag sobre e5f29d1). GitHub CLI (`gh`) instalado y autenticado como jh2026programer.
-6. DEPLOY → Docker + Docker Swarm (Docker Desktop aún no instalado)
+6. DEPLOY → Docker + Docker Swarm ✅ en el PC del usuario (Docker Desktop 29.8). `deploy/deploy.ps1` construye `sifce-api` (whatever/Dockerfile) y `sifce-web` (view/Dockerfile, nginx), crea secretos de Swarm (la API los lee con `*_FILE`) y despliega el stack `sifce`: web (puerto 8080, proxy de /api), api ×2, db (postgres:16, schema como config), seed (replicated-job). `deploy/remove.ps1` lo detiene. Autorreparación verificada (réplica matada → nueva en ~11 s sin caída).
 7. OPERATE → Prometheus (`prom-client`, `/metrics`) + Grafana + PagerDuty — **es la etapa que se expone**
 8. MONITOR → New Relic (APM + logs)
 
