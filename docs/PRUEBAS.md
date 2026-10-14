@@ -1,13 +1,10 @@
 # Pruebas
 
-**Estado real de este apartado**: durante la construcción de este prototipo
-se ejecutaron pruebas manuales de extremo a extremo contra un backend vivo y
-una base de datos PostgreSQL real (no simulada), y se corrigieron los
-errores que esas pruebas encontraron. **No se escribió una suite de pruebas
-automatizadas** (Jest/Supertest) por el alcance de tiempo de este prototipo.
-Esta sección documenta (1) exactamente qué se probó manualmente y qué se
-encontró, y (2) una estrategia concreta para automatizar esas mismas pruebas
-más adelante.
+**Estado real de este apartado**: el proyecto tiene **pruebas manuales**
+(registro de la sección 1) y una **suite de 101 pruebas automáticas** de la
+API con Jest + Supertest (sección 2), que corre sola en CircleCI en cada push
+(etapa 4 · TEST del ciclo de vida). La sección 3 deja lo que aún no se
+automatizó (frontend y extremo a extremo).
 
 ## 1. Pruebas manuales ejecutadas (registro real)
 
@@ -83,26 +80,45 @@ Los errores #11 y #17 (encontrados en la ronda de pruebas original) son
 reales y se encontraron **gracias** a estas pruebas; quedaron corregidos en
 el código entregado, no son una limitación pendiente.
 
-## 2. Estrategia de pruebas automatizadas recomendada (no incluida en el código)
+## 2. Pruebas automáticas de la API (Jest + Supertest) — implementadas
 
-Para un entorno de CI/CD, se recomienda:
+Herramientas (etapa 4 · TEST del ciclo de vida):
+- **Jest**: framework de pruebas (equivalente en JavaScript a JUnit o pytest).
+- **Supertest**: hace peticiones HTTP reales a la app Express sin abrir un puerto.
+- **jest-junit**: genera `whatever/reports/junit.xml`, que CircleCI muestra en su pestaña "Tests".
 
-### Backend — Jest + Supertest
+### Cómo correrlas
+
+```bash
+npm test            # desde la raíz: 101 pruebas en ~20 s
 ```
-npm install --save-dev jest supertest --prefix backend
-```
-Casos sugeridos, agrupados como en la matriz de trazabilidad:
-- **Autenticación**: login válido/inválido, cuenta desactivada, empresa desactivada, token expirado/manipulado.
-- **Roles**: cada ruta protegida devuelve 403 para roles no permitidos.
-- **Aislamiento entre empresas**: para cada recurso (vacantes, postulaciones, candidatos, criterios, etapas, usuarios), un usuario de la empresa B nunca puede leer/modificar un recurso de la empresa A.
-- **Vinculación privada y entornos del candidato**: registro con código válido/inválido/duplicado, listado de empresas vinculadas, rechazo sin `X-Active-Company`, y — el caso más importante — una misma candidata vinculada a 2 empresas no puede ver ni mezclar vacantes/postulaciones entre ambos entornos.
-- **CRUD de vacantes**: creación, edición, cambio de estado, validaciones de campos obligatorios.
-- **Carga de CV**: PDF válido, tipo de archivo incorrecto, tamaño excedido, extracción fallida.
-- **Postulación**: éxito, duplicada, vacante inactiva, sin CV.
-- **Análisis de IA (proveedor mock)**: dado un perfil y una vacante conocidos, el puntaje por categoría es el esperado (pruebas de regresión sobre `mockProvider.js`, que es determinístico por diseño — ideal para tests unitarios sin mocks adicionales).
-- **Ranking y comparación**: orden correcto, validación de "misma empresa"/"misma vacante".
-- **Cambio de etapa**: transición válida + registro en `application_stage_history`.
-- **Criterios y etapas**: pesos por defecto (25/25/25/25) cuando no hay configuración propia.
+
+Necesita PostgreSQL con las credenciales de `whatever/.env`. Las pruebas
+trabajan en un schema propio, `sifce_test`, que se borra y se vuelve a crear
+(tablas + datos demo) al inicio de cada archivo de prueba: **nunca tocan los
+datos reales del schema `public`**. La IA corre en modo `mock` (sin costo) y
+CAPTCHA/OTP se desactivan (ver `whatever/tests/setup/env.js`).
+
+En CircleCI el job `test` levanta su propia base PostgreSQL 16 temporal y
+corre exactamente el mismo comando después de que el job `build` pasa.
+
+### Qué cubren
+
+| Archivo (`whatever/tests/`) | Requisitos | Qué verifica |
+|---|---|---|
+| `auth.test.js` | RF01, RF02, RF03, RNF-S2/S3 | login de los 7 usuarios demo, errores genéricos, token inválido, bloqueo tras 5 intentos, registro de candidato (con código) y de empresa, cuenta propia |
+| `isolation.test.js` | RNF-S4, RF16, RF17 | una empresa nunca ve ni modifica vacantes, postulaciones, candidatos, CV, criterios, etapas o usuarios de otra (404); entornos del candidato con `X-Active-Company`; rotación del código de acceso |
+| `selection-process.test.js` | RF05, RF07–RF13, RF17 | vacantes, carga de PDF, postulación, análisis de IA completo, ranking ordenado, comparación, cambio de etapa con historial, retiro y re-postulación |
+| `company-admin.test.js` | RF14, RF15, RF18, RF19, reportes | información de la empresa, usuarios internos, criterios, etapas, resumen de reportes y exportación CSV |
+| `superadmin.test.js` | RF04, gestión global | empresas (creación operable, desactivación que corta sesiones) y gestión global de usuarios (filtros, desbloqueo, activar/desactivar, contraseña) |
+| `candidate-profile.test.js` | RF06 | perfil y sus 5 secciones, valores por defecto, vinculación por código |
+
+Encontraron y se corrigió un error real: la extracción de texto de los PDF
+fallaba cuando el archivo llegaba en un entorno aislado (`bad XRef entry`);
+ahora `whatever/utils/pdfExtractor.js` entrega a la librería los bytes como
+`Uint8Array` propio.
+
+## 3. Lo que aún no se automatizó
 
 ### Frontend — Vitest + React Testing Library
 - Render de `ProtectedRoute` con/sin sesión y con rol incorrecto.
@@ -113,5 +129,5 @@ Casos sugeridos, agrupados como en la matriz de trazabilidad:
 - Flujo completo candidato: registro → perfil → CV → postulación → ver estado.
 - Flujo completo reclutador: crear vacante → ver postulación → ver ranking → cambiar etapa.
 
-Ninguno de estos archivos de prueba automatizada se generó en este prototipo;
-esta sección deja el plan concreto para hacerlo en una siguiente iteración.
+Estas pruebas de interfaz y de extremo a extremo quedan como siguiente
+iteración; las de la API (sección 2) ya están implementadas y en CI.

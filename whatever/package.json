@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon --watch . --watch ../model server.js"
+    "dev": "nodemon --watch . --watch ../model server.js",
+    "test": "jest --runInBand"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -21,10 +22,37 @@
     "pg": "^8.12.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "nodemon": "^3.1.4",
+    "supertest": "^7.3.1"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "setupFiles": [
+      "<rootDir>/tests/setup/env.js"
+    ],
+    "testTimeout": 30000,
+    "verbose": true,
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "reports",
+          "outputName": "junit.xml",
+          "classNameTemplate": "{classname}",
+          "titleTemplate": "{title}",
+          "addFileAttribute": "true"
+        }
+      ]
+    ]
+  }
 }

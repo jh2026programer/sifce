@@ -8,7 +8,10 @@ const pdfParse = require('pdf-parse');
 async function extractTextFromPdf(filePath) {
   try {
     const buffer = fs.readFileSync(filePath);
-    const data = await pdfParse(buffer);
+    // Uint8Array propio (no el Buffer de fs): pdf.js valida el tipo con
+    // instanceof, y en entornos aislados (como Jest) un Buffer creado fuera
+    // no pasa esa validación y el PDF se lee mal ("bad XRef entry").
+    const data = await pdfParse(new Uint8Array(buffer));
     const text = (data.text || '').trim();
 
     if (!text || text.length < 20) {

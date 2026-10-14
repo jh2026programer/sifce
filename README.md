@@ -100,10 +100,10 @@ lógica real de backend y conectados a una interfaz funcional, sobre el
 modelo privado por empresa descrito arriba (una revisión posterior al primer
 entregable reemplazó por completo el listado público de vacantes por este
 modelo de vinculación por código — ver `docs/ARQUITECTURA.md`, sección
-"Modelo privado por empresa"). Lo que **no** se incluye, para ser honestos:
-una suite de pruebas automatizadas (se documenta la estrategia en
-`docs/PRUEBAS.md`), pruebas de carga reales, y pruebas en múltiples
-navegadores/dispositivos físicos.
+"Modelo privado por empresa"). Incluye **101 pruebas automáticas** de la API (Jest + Supertest,
+`npm test`) que corren en CircleCI en cada push. Lo que **no** se incluye,
+para ser honestos: pruebas automáticas de la interfaz, pruebas de carga
+reales, y pruebas en múltiples navegadores/dispositivos físicos.
 
 ## Tecnologías
 
@@ -149,7 +149,7 @@ sifce/
     MODULO_IA.md       Contrato del módulo de IA e independencia del proveedor
     SEGURIDAD.md       OTP, CAPTCHA y bloqueo por intentos fallidos
     TRAZABILIDAD.md    Matriz RF/RNF → módulo → pantalla → endpoint → tabla → verificación
-    PRUEBAS.md         Registro de pruebas manuales ejecutadas + estrategia de automatización
+    PRUEBAS.md         Pruebas manuales + pruebas automáticas (Jest + Supertest) y cómo correrlas
     DESPLIEGUE.md      Cómo desplegar en distintos entornos
   README.md            Este archivo
 ```
@@ -199,7 +199,13 @@ npm run dev:api      # terminal 1: API en http://localhost:4000/api/v1
 npm run dev:web      # terminal 2: interfaz en http://localhost:5173
 ```
 
-### 5. (Opcional) build de producción de la interfaz
+### 5. Pruebas automáticas
+
+```bash
+npm test             # 101 pruebas de la API (Jest + Supertest) en un schema aparte: no tocan tus datos
+```
+
+### 6. (Opcional) build de producción de la interfaz
 
 ```bash
 npm run build:web    # genera view/dist — servible desde cualquier servidor estático

@@ -1,13 +1,17 @@
 # =====================================================================
-# SIFCE - Integración continua (ciclo de vida: etapa 3 · BUILD)
+# SIFCE - Integración continua en CircleCI
 #
-# Cada vez que se sube código a GitHub, CircleCI:
-#   1. descarga el repositorio,
-#   2. instala las dependencias de model/, whatever/ y view/ (npm workspaces),
-#   3. verifica que todo el código de la API y de los modelos sea JavaScript válido
-#      y que la API cargue completa (rutas, controladores, modelos),
-#   4. compila la interfaz de React (view/) para producción,
-#   5. guarda el build como artefacto descargable.
+# Cada vez que se sube código a GitHub se ejecuta el flujo "build-y-pruebas":
+#
+#   build  (ciclo de vida, etapa 3 · BUILD)
+#     instala dependencias, revisa la sintaxis de model/ y whatever/,
+#     verifica que la API carga y compila view/ para producción.
+#
+#   test   (ciclo de vida, etapa 4 · TEST) — solo si build pasó
+#     levanta una base PostgreSQL temporal, crea las tablas, carga los datos
+#     demo y corre las pruebas automáticas (Jest + Supertest) contra la API.
+#     Los resultados se publican en la pestaña "Tests" de CircleCI.
+#
 # Si cualquier paso falla, el commit queda marcado con ❌ en GitHub.
 # =====================================================================
 version: 2.1
@@ -18,26 +22,46 @@ executors:
       - image: cimg/node:lts
     working_directory: ~/sifce
 
-jobs:
-  build:
-    executor: node
-    steps:
-      - checkout
+  node-con-postgres:
+    docker:
+      - image: cimg/node:lts
+        environment:
+          # Base temporal de CI: se crea vacía en cada ejecución y se destruye al final.
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: sifce_ci
+          DB_USER: sifce
+          DB_PASSWORD: sifce_ci
+          JWT_SECRET: solo-para-pruebas-de-ci
+      - image: cimg/postgres:16.9
+        environment:
+          POSTGRES_USER: sifce
+          POSTGRES_PASSWORD: sifce_ci
+          POSTGRES_DB: sifce_ci
+    working_directory: ~/sifce
 
+commands:
+  instalar-dependencias:
+    steps:
       - restore_cache:
           name: Restaurar dependencias en caché
           keys:
             - deps-v1-{{ checksum "package-lock.json" }}
-
       - run:
           name: Instalar dependencias (model, whatever, view)
           command: npm ci --no-audit --no-fund
-
       - save_cache:
           name: Guardar dependencias en caché
           key: deps-v1-{{ checksum "package-lock.json" }}
           paths:
             - ~/.npm
+
+jobs:
+  build:
+    executor: node
+    steps:
+      - checkout
+      - instalar-dependencias
 
       - run:
           name: Revisar sintaxis de la API y los modelos
@@ -60,7 +84,31 @@ jobs:
           path: view/dist
           destination: view-dist
 
+  test:
+    executor: node-con-postgres
+    steps:
+      - checkout
+      - instalar-dependencias
+
+      - run:
+          name: Esperar a que PostgreSQL esté listo
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+
+      - run:
+          name: Pruebas automáticas (Jest + Supertest)
+          command: npm test
+
+      - store_test_results:
+          path: whatever/reports
+
+      - store_artifacts:
+          path: whatever/reports
+          destination: reportes-de-pruebas
+
 workflows:
-  build:
+  build-y-pruebas:
     jobs:
       - build
+      - test:
+          requires:
+            - build

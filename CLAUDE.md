@@ -102,7 +102,7 @@ Tablas: `companies`, `users` (con `failed_login_attempts`, `locked_until`), `log
 
 ## 9. Pendientes y limitaciones conocidas
 
-- Sin pruebas automatizadas (solo `docs/PRUEBAS.md` con 59 escenarios manuales).
+- Pruebas automáticas solo de la API (101, Jest + Supertest en `whatever/tests/`, `npm test`); sin pruebas automáticas de la interfaz ni E2E.
 - Sin migraciones de BD.
 - No desplegado (solo local). HTTPS preparado pero no configurado.
 - No probado con servicios reales: reCAPTCHA, SMTP, pruebas de carga, multi-navegador.
@@ -115,8 +115,8 @@ El equipo lleva el proyecto en un tablero de Trello con las fases **PLAN → COD
 Herramientas elegidas por etapa (a partir de la diapositiva del curso; OPERATE se expone ante el profesor, el resto solo se implementa):
 1. PLAN → Trello ✅
 2. CODE → VS Code + Git + GitHub ✅ (repo https://github.com/jh2026programer/sifce, rama `main`)
-3. BUILD → npm/Vite + **CircleCI** (`.circleci/config.yml`: npm ci, `node --check`, carga de la API, build de view) — en curso
-4. TEST → Jest + Supertest (en vez de JUnit/pytest), corriendo en CircleCI
+3. BUILD → npm/Vite + **CircleCI** (`.circleci/config.yml`: npm ci, `node --check`, carga de la API, build de view) ✅ (pipeline #1 en verde)
+4. TEST → Jest + Supertest (en vez de JUnit/pytest), corriendo en CircleCI (job `test` con PostgreSQL temporal) ✅. Local: `npm test`, usa el schema `sifce_test` (se recrea por archivo, nunca toca `public`)
 5. RELEASE → tags de Git + GitHub Releases + CHANGELOG (en vez de Nexus/Octopus)
 6. DEPLOY → Docker + Docker Swarm (Docker Desktop aún no instalado)
 7. OPERATE → Prometheus (`prom-client`, `/metrics`) + Grafana + PagerDuty — **es la etapa que se expone**

@@ -14,7 +14,8 @@
     "start:api": "npm start -w whatever",
     "build:web": "npm run build -w view",
     "db:create": "npm run db:create -w model",
-    "db:seed": "npm run db:seed -w model"
+    "db:seed": "npm run db:seed -w model",
+    "test": "npm test -w whatever"
   },
   "engines": {
     "node": ">=18.0.0"
