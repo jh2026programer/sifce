@@ -80,9 +80,22 @@ jobs:
           environment:
             VITE_API_URL: https://api.sifce.example/api/v1
 
+      # Artefactos del build (el equivalente a un .jar en Java):
+      #   sifce-web.zip -> interfaz compilada, lista para un servidor web
+      #   sifce-api.zip -> API (whatever/) + modelos (model/) con su lockfile,
+      #                    lista para "npm ci --omit=dev" y "npm run start:api"
+      - run:
+          name: Empaquetar artefactos (sifce-web.zip y sifce-api.zip)
+          command: |
+            mkdir -p artifacts
+            (cd view/dist && zip -qr ../../artifacts/sifce-web.zip .)
+            git archive --format=zip -o artifacts/sifce-api.zip HEAD \
+              model whatever view/package.json package.json package-lock.json README.md .env.example
+            ls -lh artifacts
+
       - store_artifacts:
-          path: view/dist
-          destination: view-dist
+          path: artifacts
+          destination: entregables
 
   test:
     executor: node-con-postgres
