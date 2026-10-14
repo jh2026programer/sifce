@@ -112,6 +112,18 @@ Tablas: `companies`, `users` (con `failed_login_attempts`, `locked_until`), `log
 
 El equipo lleva el proyecto en un tablero de Trello con las fases **PLAN → CODE → BUILD → TEST → RELEASE → DEPLOY → OPERATE → MONITOR**, con descripciones y tareas por tarjeta. Los próximos ajustes de ciclo de vida probablemente se relacionen con esto.
 
+Herramientas elegidas por etapa (a partir de la diapositiva del curso; OPERATE se expone ante el profesor, el resto solo se implementa):
+1. PLAN → Trello ✅
+2. CODE → VS Code + Git + GitHub ✅ (repo https://github.com/jh2026programer/sifce, rama `main`)
+3. BUILD → npm/Vite + **CircleCI** (`.circleci/config.yml`: npm ci, `node --check`, carga de la API, build de view) — en curso
+4. TEST → Jest + Supertest (en vez de JUnit/pytest), corriendo en CircleCI
+5. RELEASE → tags de Git + GitHub Releases + CHANGELOG (en vez de Nexus/Octopus)
+6. DEPLOY → Docker + Docker Swarm (Docker Desktop aún no instalado)
+7. OPERATE → Prometheus (`prom-client`, `/metrics`) + Grafana + PagerDuty — **es la etapa que se expone**
+8. MONITOR → New Relic (APM + logs)
+
+Al trabajar cada etapa, decir siempre en qué número/etapa del ciclo estamos. Marcar en Trello (tablero "Mi tablero de Trello") las tarjetas completadas.
+
 ## 11. Forma de trabajo y seguridad
 
 - Comunicación en **español**, explicaciones claras (el usuario es estudiante y también pide explicaciones conceptuales).

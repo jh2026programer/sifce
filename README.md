@@ -1,5 +1,9 @@
 # SIFCE — Sistema Inteligente de Filtro y Contratación Empresarial
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/jh2026programer/sifce/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jh2026programer/sifce/tree/main)
+
+Repositorio: https://github.com/jh2026programer/sifce · Integración continua en CircleCI (`.circleci/config.yml`).
+
 Plataforma **central y privada por empresa**: nosotros somos el proveedor
 del servicio, y cada empresa cliente opera su propio entorno aislado e
 independiente para gestionar sus vacantes, candidatos y procesos de
