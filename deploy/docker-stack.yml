@@ -81,10 +81,14 @@ services:
       JWT_SECRET_FILE: /run/secrets/sifce_jwt_secret
       AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_API_KEY_FILE: /run/secrets/sifce_ai_api_key
+      # MONITOR (etapa 8): New Relic APM; sin clave el agente no se activa.
+      NEW_RELIC_LICENSE_KEY_FILE: /run/secrets/sifce_newrelic_license_key
+      NEW_RELIC_APP_NAME: SIFCE (Docker Swarm)
     secrets:
       - sifce_db_password
       - sifce_jwt_secret
       - sifce_ai_api_key
+      - sifce_newrelic_license_key
     volumes:
       - uploads:/data/uploads
     deploy:
@@ -197,6 +201,9 @@ secrets:
     name: ${SIFCE_PAGERDUTY_SECRET:?ejecuta deploy/deploy.ps1}
   sifce_grafana_admin_password:
     external: true
+  sifce_newrelic_license_key:
+    external: true
+    name: ${SIFCE_NEWRELIC_SECRET:?ejecuta deploy/deploy.ps1}
 
 configs:
   sifce_schema:

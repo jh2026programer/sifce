@@ -127,6 +127,19 @@ if ($pdKey) {
 $env:SIFCE_PAGERDUTY_SECRET = "sifce_pagerduty_key_$(Get-TextFingerprint $pdKey)"
 New-SwarmSecret $env:SIFCE_PAGERDUTY_SECRET $pdKey
 
+# New Relic (etapa 8 · MONITOR): si existe deploy\.newrelic-key, la API envía
+# su rendimiento a New Relic APM.
+$nrFile = Join-Path $PSScriptRoot '.newrelic-key'
+$nrKey = if (Test-Path $nrFile) { (Get-Content $nrFile -Raw).Trim() } else { '' }
+if ($nrKey) {
+  Write-Host '   New Relic: clave encontrada, la API enviará su rendimiento a New Relic APM'
+} else {
+  $nrKey = 'sin-clave'
+  Write-Host '   New Relic: sin deploy\.newrelic-key, el monitoreo APM queda apagado' -ForegroundColor Yellow
+}
+$env:SIFCE_NEWRELIC_SECRET = "sifce_newrelic_key_$(Get-TextFingerprint $nrKey)"
+New-SwarmSecret $env:SIFCE_NEWRELIC_SECRET $nrKey
+
 # --- 4. Despliegue --------------------------------------------------------
 $monitoring = Join-Path $PSScriptRoot 'monitoring'
 $env:SIFCE_VERSION = $version
@@ -150,3 +163,4 @@ Write-Host '  Aplicación      http://localhost:8080   (usuarios demo en el READ
 Write-Host '  Grafana         http://localhost:3000   (panel SIFCE · Operación; admin en deploy\.grafana-admin.txt)'
 Write-Host '  Prometheus      http://localhost:9090/alerts'
 Write-Host '  Alertmanager    http://localhost:9093'
+Write-Host '  New Relic APM   https://one.newrelic.com  (APM & Services -> "SIFCE (Docker Swarm)")'

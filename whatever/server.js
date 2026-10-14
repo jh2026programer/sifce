@@ -1,4 +1,7 @@
 // Punto de entrada de la API: toma la app de app.js y la pone a escuchar.
+// La primera línea activa New Relic (si hay clave) antes de cargar lo demás.
+require('./instrumentation');
+
 const config = require('./config/env');
 const app = require('./app');
 const aiProvider = require('./services/ai/aiProvider');
