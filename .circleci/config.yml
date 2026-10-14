@@ -78,7 +78,10 @@ jobs:
           name: Compilar la interfaz (view)
           command: npm run build:web
           environment:
-            VITE_API_URL: https://api.sifce.example/api/v1
+            # Dirección de la API que queda grabada en la interfaz al compilar.
+            # localhost para que el artefacto funcione junto a sifce-api.zip en
+            # un equipo local; en DEPLOY se recompila con la URL del servidor.
+            VITE_API_URL: http://localhost:4000/api/v1
 
       # Artefactos del build (el equivalente a un .jar en Java):
       #   sifce-web.zip -> interfaz compilada, lista para un servidor web
