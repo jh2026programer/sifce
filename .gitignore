@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (nunca subir secretos reales)
+.env
+.env.local
+
+# Builds
+dist/
+build/
+
+# Archivos subidos por candidatos (hojas de vida reales)
+whatever/uploads/resumes/*
+!whatever/uploads/resumes/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo / editor
+.DS_Store
+.vscode/
+.idea/

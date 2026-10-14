@@ -1,0 +1,14 @@
+{
+  "name": "sifce-model",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SIFCE - MODEL: esquema PostgreSQL y acceso a datos (un archivo SQL por entidad)",
+  "type": "commonjs",
+  "scripts": {
+    "db:create": "node scripts/dbSetup.js",
+    "db:seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "pg": "^8.12.0"
+  }
+}

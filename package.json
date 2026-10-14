@@ -1,0 +1,22 @@
+{
+  "name": "sifce",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SIFCE - Sistema Inteligente de Filtro y Contratación Empresarial (arquitectura MVW: model / view / whatever)",
+  "workspaces": [
+    "model",
+    "whatever",
+    "view"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w whatever",
+    "dev:web": "npm run dev -w view",
+    "start:api": "npm start -w whatever",
+    "build:web": "npm run build -w view",
+    "db:create": "npm run db:create -w model",
+    "db:seed": "npm run db:seed -w model"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
