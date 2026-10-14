@@ -4,6 +4,7 @@ const candidateModel = require('../../model/candidate.model.js');
 const criteriaModel = require('../../model/criteria.model.js');
 const aiResultModel = require('../../model/aiResult.model.js');
 const aiProvider = require('./ai/aiProvider');
+const metrics = require('./metrics');
 
 const DEFAULT_WEIGHT = 25; // repartido en partes iguales si la empresa no configuró criterios (RF14)
 
@@ -46,6 +47,7 @@ async function runAnalysis({ applicationId }) {
   const resumeText = application.extracted_text || '';
 
   await aiResultModel.markProcessing(applicationId);
+  const stopTimer = metrics.startAiTimer();
 
   try {
     const result = await aiProvider.analyze({ resumeText, candidateProfile, vacancy });
@@ -59,9 +61,13 @@ async function runAnalysis({ applicationId }) {
       100;
 
     await aiResultModel.saveCompleted(applicationId, { provider: aiProvider.name, overallScore, result });
+    stopTimer();
+    metrics.recordAiAnalysis('completed');
 
     return { success: true, overallScore };
   } catch (err) {
+    stopTimer();
+    metrics.recordAiAnalysis('failed');
     await aiResultModel.markFailed(applicationId, err.message);
     return { success: false, error: err.message };
   }

@@ -1,0 +1,84 @@
+# Reglas de alerta de SIFCE. Cada una protege un requisito no funcional del
+# SRS. Cuando una se cumple durante el tiempo "for", Prometheus la envía a
+# Alertmanager, que abre el incidente en PagerDuty.
+groups:
+  - name: sifce-disponibilidad
+    rules:
+      - alert: SifceApiCaida
+        # Ninguna réplica de la API responde (RNF-D1: disponibilidad ≥ 95 %).
+        expr: absent(up{job="sifce-api"} == 1)
+        for: 15s
+        labels:
+          severity: critical
+          requisito: RNF-D1
+        annotations:
+          summary: "SIFCE caído: ninguna réplica de la API responde"
+          description: "Prometheus no logra leer métricas de ninguna réplica de la API. Los usuarios no pueden usar SIFCE."
+
+      - alert: SifceReplicaApiCaida
+        # Menos de 2 réplicas sanas: el servicio sigue, pero sin redundancia.
+        expr: count(up{job="sifce-api"} == 1) < 2
+        for: 5s
+        labels:
+          severity: warning
+          requisito: RNF-D1
+        annotations:
+          summary: "Una réplica de la API de SIFCE no está disponible"
+          description: "Solo {{ $value }} réplica(s) sana(s) de 2. SIFCE sigue atendiendo, pero sin redundancia hasta que Swarm la reemplace."
+
+      - alert: SifceBaseDeDatosCaida
+        # La API no logra consultar PostgreSQL (RNF-F2: integridad de la información).
+        expr: min(sifce_database_up) == 0
+        for: 15s
+        labels:
+          severity: critical
+          requisito: RNF-F2
+        annotations:
+          summary: "SIFCE perdió la conexión con la base de datos"
+          description: "La API no puede consultar PostgreSQL: inicios de sesión, vacantes y postulaciones fallarán."
+
+  - name: sifce-rendimiento
+    rules:
+      - alert: SifceRespuestaLenta
+        # RNF-R1: tiempo de respuesta ≤ 3 s.
+        expr: histogram_quantile(0.95, sum by (le) (rate(sifce_http_request_duration_seconds_bucket[2m]))) > 3
+        for: 1m
+        labels:
+          severity: warning
+          requisito: RNF-R1
+        annotations:
+          summary: "SIFCE responde lento (p95 > 3 s)"
+          description: "El 5 % más lento de las peticiones tarda {{ $value | humanizeDuration }}; el SRS exige máximo 3 s."
+
+      - alert: SifceErroresDelServidor
+        # RNF-F1: manejo de errores; más de 1 error 500 cada 10 s.
+        expr: sum(rate(sifce_http_request_duration_seconds_count{status_code=~"5.."}[1m])) > 0.1
+        for: 30s
+        labels:
+          severity: error
+          requisito: RNF-F1
+        annotations:
+          summary: "La API de SIFCE está devolviendo errores 500"
+          description: "{{ $value | humanize }} errores internos por segundo."
+
+  - name: sifce-negocio
+    rules:
+      - alert: SifceFallasAnalisisIA
+        # RF09 + RNF-F4: el análisis de IA falla (clave inválida, cuota agotada, proveedor caído).
+        expr: sum by (provider) (increase(sifce_ai_analyses_total{result="failed"}[5m])) > 0
+        labels:
+          severity: error
+          requisito: RNF-F4
+        annotations:
+          summary: "Fallan los análisis de IA de SIFCE (proveedor {{ $labels.provider }})"
+          description: "Hubo análisis de compatibilidad fallidos en los últimos 5 minutos. Revisar la clave o la cuota del proveedor; los reclutadores pueden reintentar desde el detalle de la postulación."
+
+      - alert: SifcePosibleFuerzaBruta
+        # RNF-S3: una o más cuentas bloqueadas por intentos fallidos.
+        expr: sum(increase(sifce_account_lockouts_total[10m])) >= 1
+        labels:
+          severity: warning
+          requisito: RNF-S3
+        annotations:
+          summary: "Cuentas bloqueadas por intentos fallidos en SIFCE"
+          description: "{{ $value | humanize }} cuenta(s) bloqueada(s) en 10 minutos: posible ataque de fuerza bruta. El superadministrador puede desbloquearlas desde Usuarios."

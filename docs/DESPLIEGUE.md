@@ -18,6 +18,7 @@ vigila y los reinicia si fallan.
 |  api   Node.js x2 réplicas: Swarm reparte las peticiones entre ellas   |
 |  db    PostgreSQL 16 con volumen persistente (db-data)                 |
 |  seed  tarea de una sola vez: carga los datos demo y termina           |
+|  prometheus · alertmanager · grafana: operación (ver docs/OPERACION.md) |
 +-------------------------------------------------------------------------+
 ```
 

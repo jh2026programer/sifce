@@ -153,6 +153,7 @@ sifce/
     TRAZABILIDAD.md    Matriz RF/RNF → módulo → pantalla → endpoint → tabla → verificación
     PRUEBAS.md         Pruebas manuales + pruebas automáticas (Jest + Supertest) y cómo correrlas
     DESPLIEGUE.md      Despliegue con Docker Swarm (deploy/) y en otros entornos
+    OPERACION.md       Operación: métricas, alertas, runbook y guion de la demostración
   README.md            Este archivo
 ```
 
@@ -213,7 +214,9 @@ npm test             # 101 pruebas de la API (Jest + Supertest) en un schema apa
 .\deploy\deploy.ps1    # requiere Docker Desktop; SIFCE queda en http://localhost:8080
 ```
 
-Detalle en `docs/DESPLIEGUE.md`.
+Incluye la operación (etapa 7): Grafana en http://localhost:3000 (panel
+"SIFCE · Operación"), Prometheus en :9090 y Alertmanager en :9093, con
+alertas a PagerDuty. Detalle en `docs/DESPLIEGUE.md` y `docs/OPERACION.md`.
 
 ### 7. (Opcional) build de producción de la interfaz
 

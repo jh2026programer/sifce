@@ -6,6 +6,7 @@ const cors = require('cors');
 const config = require('./config/env');
 const routes = require('./routes');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const metrics = require('./services/metrics');
 
 const app = express();
 
@@ -15,6 +16,19 @@ const app = express();
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(metrics.httpMetricsMiddleware);
+
+// Métricas para Prometheus (etapa 7 · OPERATE). Fuera de /api a propósito:
+// nginx solo publica /api/, así que /metrics únicamente es accesible dentro
+// de la red interna del stack, donde lo lee Prometheus.
+app.get('/metrics', async (req, res, next) => {
+  try {
+    res.set('Content-Type', metrics.register.contentType);
+    res.end(await metrics.register.metrics());
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.use('/api/v1', routes);
 

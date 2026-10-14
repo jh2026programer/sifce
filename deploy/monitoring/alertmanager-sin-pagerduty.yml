@@ -1,0 +1,9 @@
+# Alertmanager sin PagerDuty: se usa mientras no exista deploy/.pagerduty-key.
+# Las alertas se siguen viendo en Prometheus (:9090/alerts) y Alertmanager
+# (:9093), pero no se envían a ningún lado.
+route:
+  receiver: ninguno
+  group_by: ["alertname"]
+
+receivers:
+  - name: ninguno

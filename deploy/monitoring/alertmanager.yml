@@ -1,0 +1,22 @@
+# Alertmanager de SIFCE con PagerDuty (se usa cuando existe deploy/.pagerduty-key).
+# La clave de integración llega como secreto de Swarm, nunca en este archivo.
+route:
+  receiver: pagerduty
+  group_by: ["alertname"]
+  group_wait: 5s
+  group_interval: 30s
+  repeat_interval: 1h
+
+receivers:
+  - name: pagerduty
+    pagerduty_configs:
+      - routing_key_file: /run/secrets/sifce_pagerduty_routing_key
+        send_resolved: true
+        severity: '{{ if .CommonLabels.severity }}{{ .CommonLabels.severity }}{{ else }}error{{ end }}'
+        client: "SIFCE · Prometheus"
+        client_url: "http://localhost:3000/d/sifce-operacion"
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          descripcion: '{{ .CommonAnnotations.description }}'
+          requisito_srs: '{{ .CommonLabels.requisito }}'
+          alertas: '{{ len .Alerts.Firing }} activa(s)'

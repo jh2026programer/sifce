@@ -25,3 +25,7 @@ npm-debug.log*
 # Reportes de pruebas automáticas
 whatever/reports/
 coverage/
+
+# Claves locales del despliegue (nunca al repositorio)
+deploy/.pagerduty-key
+deploy/.grafana-admin.txt

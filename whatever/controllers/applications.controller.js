@@ -10,6 +10,7 @@ const { requireCompanyId, assertBelongsToCompany } = require('../utils/scope');
 const compatibilityService = require('../services/compatibilityService');
 const { getProfileIdForUser } = require('./candidates.controller.js');
 const { logActivity } = require('../services/activityLogService');
+const metrics = require('../services/metrics');
 
 async function getVacancyOrThrow(vacancyId) {
   const vacancy = await vacancyModel.findById(vacancyId);
@@ -77,6 +78,7 @@ const applyToVacancy = asyncHandler(async (req, res) => {
   });
 
   await logActivity({ userId: req.user.id, action: 'apply_to_vacancy', entityType: 'application', entityId: application.id });
+  metrics.recordApplication();
 
   // RF09 - se dispara el análisis de IA en segundo plano (RNF-R1: no bloquea
   // la respuesta de la postulación; RNF-R3: el frontend consulta el estado

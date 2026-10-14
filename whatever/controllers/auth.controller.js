@@ -14,6 +14,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../services/activityLogService');
 const { generateAccessCode } = require('../utils/accessCode');
 const { linkCandidateByCode } = require('../services/companyLinkService');
+const metrics = require('../services/metrics');
 
 const sessionFor = (user) => userView.session(user, authService.generateToken(user));
 
@@ -27,16 +28,25 @@ const login = asyncHandler(async (req, res) => {
   const user = await userModel.findByEmailWithCompanyStatus(email);
 
   // Mensaje genérico: no revelar si el correo existe o no.
-  if (!user) throw new AppError('Credenciales inválidas.', 401);
-  if (!user.is_active) throw new AppError('Tu cuenta está desactivada. Contacta a tu administrador.', 403);
-  if (user.company_id && user.company_status !== 'active') {
-    throw new AppError('La empresa asociada a esta cuenta se encuentra desactivada en la plataforma.', 403);
+  if (!user) {
+    metrics.recordLogin('invalid');
+    throw new AppError('Credenciales inválidas.', 401);
+  }
+  if (!user.is_active || (user.company_id && user.company_status !== 'active')) {
+    metrics.recordLogin('inactive');
+    throw new AppError(
+      user.is_active
+        ? 'La empresa asociada a esta cuenta se encuentra desactivada en la plataforma.'
+        : 'Tu cuenta está desactivada. Contacta a tu administrador.',
+      403
+    );
   }
 
   // Bloqueo por intentos fallidos: si la cuenta está bloqueada, ni siquiera
   // se compara la contraseña (evita seguir "adivinando" mientras está bloqueada).
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
     const minutesLeft = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+    metrics.recordLogin('locked');
     throw new AppError(
       `Cuenta bloqueada temporalmente por demasiados intentos fallidos. Intenta de nuevo en ${minutesLeft} minuto(s).`,
       429
@@ -50,12 +60,15 @@ const login = asyncHandler(async (req, res) => {
       const lockedUntil = new Date(Date.now() + config.loginLockout.lockMinutes * 60 * 1000);
       await userModel.lockUntil(user.id, lockedUntil);
       await logActivity({ userId: user.id, action: 'account_locked' });
+      metrics.recordLogin('invalid');
+      metrics.recordLockout();
       throw new AppError(
         `Demasiados intentos fallidos. La cuenta quedó bloqueada por ${config.loginLockout.lockMinutes} minutos.`,
         429
       );
     }
     await userModel.setFailedAttempts(user.id, attempts);
+    metrics.recordLogin('invalid');
     throw new AppError('Credenciales inválidas.', 401);
   }
 
@@ -71,6 +84,7 @@ const login = asyncHandler(async (req, res) => {
   }
 
   await logActivity({ userId: user.id, companyId: user.company_id, action: 'login' });
+  metrics.recordLogin('success');
   view.ok(res, sessionFor(user));
 });
 

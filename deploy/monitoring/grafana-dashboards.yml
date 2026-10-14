@@ -1,0 +1,10 @@
+# Grafana: carga los paneles desde archivos al arrancar.
+apiVersion: 1
+providers:
+  - name: sifce
+    folder: SIFCE
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards
