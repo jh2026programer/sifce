@@ -3,6 +3,7 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/jh2026programer/sifce/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jh2026programer/sifce/tree/main)
 
 Repositorio: https://github.com/jh2026programer/sifce · Integración continua en CircleCI (`.circleci/config.yml`).
+Versión actual: **v1.0.0** — [notas y descargas](https://github.com/jh2026programer/sifce/releases/tag/v1.0.0) · historial en [`CHANGELOG.md`](CHANGELOG.md).
 
 Plataforma **central y privada por empresa**: nosotros somos el proveedor
 del servicio, y cada empresa cliente opera su propio entorno aislado e
