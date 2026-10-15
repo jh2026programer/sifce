@@ -33,6 +33,11 @@ if (process.env.NEW_RELIC_LICENSE_KEY) {
   // Nunca enviar a New Relic el contenido de las peticiones (contraseñas,
   // datos de candidatos): solo tiempos, rutas y errores.
   process.env.NEW_RELIC_ATTRIBUTES_EXCLUDE = 'request.headers.authorization,request.headers.cookie,request.parameters.*';
+  // SIFCE no corre en AWS, Azure, GCP ni Kubernetes: no intentar detectarlos
+  // (evita errores inofensivos pero ruidosos en los logs al arrancar).
+  for (const vendor of ['AWS', 'AZURE', 'GCP', 'PCF', 'KUBERNETES']) {
+    process.env[`NEW_RELIC_UTILIZATION_DETECT_${vendor}`] = 'false';
+  }
 
   require('newrelic');
   // eslint-disable-next-line no-console

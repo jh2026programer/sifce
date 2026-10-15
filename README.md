@@ -154,6 +154,7 @@ sifce/
     PRUEBAS.md         Pruebas manuales + pruebas automáticas (Jest + Supertest) y cómo correrlas
     DESPLIEGUE.md      Despliegue con Docker Swarm (deploy/) y en otros entornos
     OPERACION.md       Operación: métricas, alertas, runbook y guion de la demostración
+    MONITOREO.md       Monitoreo del rendimiento con New Relic APM
   README.md            Este archivo
 ```
 
