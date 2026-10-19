@@ -155,6 +155,7 @@ sifce/
     DESPLIEGUE.md      Despliegue con Docker Swarm (deploy/) y en otros entornos
     OPERACION.md       Operación: métricas, alertas, runbook y guion de la demostración
     MONITOREO.md       Monitoreo del rendimiento con New Relic APM
+    DEMO_OPERATE.md    Guía de la demostración en vivo de OPERATE (deploy/demo-operate.ps1)
   README.md            Este archivo
 ```
 

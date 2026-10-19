@@ -76,6 +76,9 @@ hora y duración estimada, antes de ejecutar `.\deploy\remove.ps1`.
 
 ## Demostración sugerida (exposición)
 
+Automatizada en `deploy/demo-operate.ps1` (un ENTER por paso); guía para
+el presentador en `docs/DEMO_OPERATE.md`. Resumen:
+
 1. **Estado normal**: Grafana con 2 réplicas, base OK, disponibilidad 100 %,
    p95 en milisegundos y 0 alertas; PagerDuty sin incidentes.
 2. **Autorreparación**: matar una réplica
