@@ -36,7 +36,7 @@ def stat(title, desc, expr, x, y, w=4, h=5, unit="none", steps=None, mappings=No
                     "colorMode": "background", "graphMode": "none", "textMode": text_mode, "justifyMode": "center"},
     })
 
-def ts(title, desc, targets, x, y, w=12, h=8, unit="none", threshold=None, stack=False):
+def ts(title, desc, targets, x, y, w=12, h=8, unit="none", threshold=None, stack=False, colors=None):
     fc = {"unit": unit, "custom": {"lineWidth": 2, "fillOpacity": 15, "showPoints": "never",
                                    "stacking": {"mode": "normal" if stack else "none", "group": "A"}}}
     if threshold is not None:
@@ -50,7 +50,10 @@ def ts(title, desc, targets, x, y, w=12, h=8, unit="none", threshold=None, stack
     panels.append({
         "type": "timeseries", "title": title, "description": desc, "id": nid(), "datasource": DS,
         "gridPos": {"h": h, "w": w, "x": x, "y": y}, "targets": tg,
-        "fieldConfig": {"defaults": fc, "overrides": []},
+        "fieldConfig": {"defaults": fc, "overrides": [
+            {"matcher": {"id": "byName", "options": name},
+             "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": color}}]}
+            for name, color in (colors or {}).items()]},
         "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": True},
                     "tooltip": {"mode": "multi", "sort": "desc"}},
     })
@@ -83,7 +86,9 @@ stat("Proveedor IA", "Motor de IA configurado en la API.",
 row("Tráfico y rendimiento (RNF-R1, RNF-F1)", 6)
 ts("Peticiones por segundo según código de respuesta", "Errores 5xx sostenidos disparan la alerta SifceErroresDelServidor.",
    [('sum by (status_code) (rate(sifce_http_request_duration_seconds_count[1m]))', "{{status_code}}")],
-   0, 7, unit="reqps", stack=True)
+   0, 7, unit="reqps",
+   colors={"200": "green", "201": "green", "304": "blue", "400": "orange", "401": "orange",
+           "404": "orange", "429": "orange", "500": "red"})
 ts("Tiempo de respuesta (p50 y p95)", "La zona roja marca el límite del SRS: 3 segundos.",
    [('histogram_quantile(0.50, sum by (le) (rate(sifce_http_request_duration_seconds_bucket[2m])))', "p50 (mediana)"),
     ('histogram_quantile(0.95, sum by (le) (rate(sifce_http_request_duration_seconds_bucket[2m])))', "p95")],
