@@ -19,9 +19,10 @@ export default function PublicVacancyPage() {
   useEffect(() => {
     vacanciesApi.getVacancy(id).then(setVacancy).catch((e) => setError(e.message));
     resumesApi.listMyResumes().then((rs) => {
-      setResumes(rs);
-      const usable = rs.find((r) => r.status === 'extracted') || rs[0];
-      if (usable) setSelectedResume(usable.id);
+      // Solo sirven las hojas de vida que el validador pudo procesar.
+      const usable = rs.filter((r) => r.status === 'extracted');
+      setResumes(usable);
+      if (usable[0]) setSelectedResume(usable[0].id);
     }).catch((e) => setError(e.message));
   }, [id]);
 
@@ -79,14 +80,15 @@ export default function PublicVacancyPage() {
           </>
         ) : resumes && resumes.length === 0 ? (
           <Alert type="info">
-            Debes cargar tu hoja de vida antes de postularte. <Link to="/candidate/cv">Cargar hoja de vida</Link>.
+            Necesitas una hoja de vida procesada correctamente (PDF válido con texto) para postularte.{' '}
+            <Link to="/candidate/cv">Cargar hoja de vida</Link>.
           </Alert>
         ) : !resumes ? (
           <Loading />
         ) : (
           <>
             <div className="form-group" style={{ maxWidth: 420 }}>
-              <label className="form-label">Hoja de vida a utilizar</label>
+              <label className="form-label">Hoja de vida a utilizar (solo las procesadas)</label>
               <select className="form-control" value={selectedResume} onChange={(e) => setSelectedResume(e.target.value)}>
                 {resumes.map((r) => <option key={r.id} value={r.id}>{r.file_name}</option>)}
               </select>

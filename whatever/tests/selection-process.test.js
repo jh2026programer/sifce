@@ -86,6 +86,20 @@ describe('RF07 - Carga de hoja de vida', () => {
 });
 
 describe('RF08 / RF09 / RF11 - Postulación y análisis de IA', () => {
+  test('no se puede postular con una hoja de vida que el validador rechazó', async () => {
+    // Un archivo de texto renombrado como .pdf: se carga, pero queda "extraction_failed".
+    const falso = await api(t.maria).upload(
+      '/resumes', 'resume', Buffer.from('texto plano disfrazado de pdf'), 'no_es_pdf.pdf', 'application/pdf'
+    );
+    expect(falso.status).toBe(201);
+    expect(falso.body.data.status).toBe('extraction_failed');
+    expect(falso.body.data.extractionError).toMatch(/no es un PDF real/);
+
+    const res = await api(t.maria, ids.technova).post('/applications', { vacancyId: vacancy.id, resumeId: falso.body.data.id });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/no se pudo procesar/);
+  });
+
   test('la candidata se postula dentro de su entorno activo', async () => {
     const res = await api(t.maria, ids.technova).post('/applications', { vacancyId: vacancy.id, resumeId });
     expect(res.status).toBe(201);

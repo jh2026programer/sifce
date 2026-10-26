@@ -55,6 +55,14 @@ const applyToVacancy = asyncHandler(async (req, res) => {
     ? await resumeModel.findOwned(resumeId, candidateId)
     : await resumeModel.findLatestForCandidate(candidateId);
   if (!resume) throw new AppError('Debes cargar tu hoja de vida antes de postularte.', 400);
+  // Una hoja de vida que el validador rechazó (no es un PDF real, está dañada
+  // o no tiene texto) no sirve para el análisis de IA: no se acepta.
+  if (resume.status !== 'extracted') {
+    throw new AppError(
+      `La hoja de vida "${resume.file_name}" no se pudo procesar${resume.extraction_error ? `: ${resume.extraction_error}` : '.'} Elige otra o carga un PDF válido.`,
+      400
+    );
+  }
 
   const application = await db.withTransaction(async (client) => {
     if (existingApplication) {

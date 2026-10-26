@@ -36,9 +36,10 @@ async function findOwned(id, candidateId) {
   return rows[0] || null;
 }
 
+// La hoja de vida más reciente que SÍ se pudo procesar (con texto extraído).
 async function findLatestForCandidate(candidateId) {
   const { rows } = await db.query(
-    'SELECT * FROM resumes WHERE candidate_id = $1 ORDER BY uploaded_at DESC LIMIT 1',
+    "SELECT * FROM resumes WHERE candidate_id = $1 AND status = 'extracted' ORDER BY uploaded_at DESC LIMIT 1",
     [candidateId]
   );
   return rows[0] || null;
