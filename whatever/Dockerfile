@@ -14,11 +14,14 @@ COPY package.json package-lock.json ./
 COPY model/package.json model/
 COPY whatever/package.json whatever/
 COPY view/package.json view/
-RUN npm ci --omit=dev -w model -w whatever --no-audit --no-fund && npm cache clean --force
+COPY microservicios/package.json microservicios/
+RUN npm ci --omit=dev -w model -w whatever -w microservicios --no-audit --no-fund && npm cache clean --force
 
-# 2) Código de la API y de los modelos.
+# 2) Código de la API y de los modelos. microservicios/ va incluido porque la
+#    API usa su código como respaldo si un microservicio no responde.
 COPY model model
 COPY whatever whatever
+COPY microservicios microservicios
 
 # Carpeta de hojas de vida (en el stack se monta un volumen persistente aquí).
 # Se prepara con dueño "node" para que el volumen nazca con esos permisos.

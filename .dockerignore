@@ -10,5 +10,7 @@ docs
 whatever/uploads
 whatever/tests
 whatever/reports
+microservicios/tests
+microservicios/reports
 coverage
 *.log

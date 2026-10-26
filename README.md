@@ -101,7 +101,7 @@ lógica real de backend y conectados a una interfaz funcional, sobre el
 modelo privado por empresa descrito arriba (una revisión posterior al primer
 entregable reemplazó por completo el listado público de vacantes por este
 modelo de vinculación por código — ver `docs/ARQUITECTURA.md`, sección
-"Modelo privado por empresa"). Incluye **101 pruebas automáticas** de la API (Jest + Supertest,
+"Modelo privado por empresa"). Incluye **138 pruebas automáticas** de la API y los microservicios (Jest + Supertest,
 `npm test`) que corren en CircleCI en cada push. Lo que **no** se incluye,
 para ser honestos: pruebas automáticas de la interfaz, pruebas de carga
 reales, y pruebas en múltiples navegadores/dispositivos físicos.
@@ -119,7 +119,7 @@ Las tres capas del patrón MVW son las tres carpetas principales del proyecto:
 
 ```
 sifce/
-  package.json         npm workspaces (model, whatever, view) + comandos de la raíz
+  package.json         npm workspaces (model, whatever, view, microservicios) + comandos de la raíz
   .env.example         Resumen de qué variables van en whatever/.env y view/.env
   model/               MODEL — datos
     schema.sql           esquema completo de PostgreSQL
@@ -134,7 +134,7 @@ sifce/
     controllers/         coordinación de cada RF (validan, llaman modelos y presentadores)
     services/            reglas de negocio: auth, OTP, CAPTCHA, IA, compatibilidad, logs
     presenters/          forma de las respuestas JSON (response.js, user.view.js, ...)
-    utils/               AppError, asyncHandler, scope (aislamiento), accessCode, pdfExtractor
+    utils/               AppError, asyncHandler, scope (aislamiento), accessCode
     uploads/resumes/     hojas de vida cargadas (no se versiona el contenido real)
   view/                VIEW — interfaz web (React + Vite)
     index.html, vite.config.js, public/
@@ -145,6 +145,9 @@ sifce/
       styles/            estilos globales y colores de las gráficas
       api/, context/     cliente Axios y sesión
       routes/, hooks/, utils/, constants/
+  microservicios/      Dos microservicios independientes (endpoint + validador + servicio cada uno)
+    compatibilidad/      puntaje ponderado y nivel (puerto 4101)
+    validador-cv/        valida el PDF y extrae texto y datos (puerto 4102)
   deploy/              docker-stack.yml (Swarm), nginx.conf, deploy.ps1 y remove.ps1
   docs/
     ARQUITECTURA.md    MVW en carpetas, reglas de dependencia, módulos, seguridad, errores
@@ -155,6 +158,7 @@ sifce/
     DESPLIEGUE.md      Despliegue con Docker Swarm (deploy/) y en otros entornos
     OPERACION.md       Operación: métricas, alertas, runbook y guion de la demostración
     MONITOREO.md       Monitoreo del rendimiento con New Relic APM
+    MICROSERVICIOS.md  Los dos microservicios: qué hacen, endpoints, cómo arrancarlos
     DEMO_OPERATE.md    Guía de la demostración en vivo de OPERATE (deploy/demo-operate.ps1)
   README.md            Este archivo
 ```
@@ -202,12 +206,16 @@ npm run db:seed      # crea datos y credenciales de demostración (ver abajo)
 ```bash
 npm run dev:api      # terminal 1: API en http://localhost:4000/api/v1
 npm run dev:web      # terminal 2: interfaz en http://localhost:5173
+npm run microservicios  # terminal 3 (opcional): microservicios en :4101 y :4102
 ```
+
+Si los microservicios no están encendidos, la API usa su respaldo interno y
+todo funciona igual (ver `docs/MICROSERVICIOS.md`).
 
 ### 5. Pruebas automáticas
 
 ```bash
-npm test             # 101 pruebas de la API (Jest + Supertest) en un schema aparte: no tocan tus datos
+npm test             # 25 de los microservicios + 113 de la API (Jest + Supertest); schema aparte: no tocan tus datos
 ```
 
 ### 6. Despliegue con Docker Swarm (como en producción)
@@ -367,7 +375,8 @@ código, y nunca mezcladas entre sí — verificado en `docs/PRUEBAS.md`.
 ## Cálculo de compatibilidad
 
 Ver `docs/MODULO_IA.md` para la fórmula exacta y cómo se combinan los
-criterios configurables de cada empresa.
+criterios configurables de cada empresa. El cálculo lo hace el microservicio
+de compatibilidad (`docs/MICROSERVICIOS.md`).
 
 ## Problemas comunes
 

@@ -62,6 +62,16 @@ module.exports = {
     model: process.env.AI_MODEL || '',
   },
 
+  // --- Microservicios (carpeta microservicios/, se ejecutan aparte) ---
+  // Si una URL está vacía, o el microservicio no responde, la API usa el
+  // mismo código del microservicio dentro de su propio proceso (respaldo),
+  // así SIFCE nunca deja de funcionar. Ver docs/MICROSERVICIOS.md.
+  microservicios: {
+    compatibilidadUrl: process.env.MS_COMPATIBILIDAD_URL || '',
+    validadorCvUrl: process.env.MS_VALIDADOR_CV_URL || '',
+    timeoutMs: parseInt(process.env.MS_TIMEOUT_MS || '5000', 10),
+  },
+
   // --- Verificación en dos pasos (OTP) al iniciar sesión ---
   otp: {
     // Desactivada por defecto por ahora (se activa más adelante con

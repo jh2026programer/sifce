@@ -61,12 +61,25 @@ const aiDuration = new client.Histogram({
   registers: [register],
 });
 
+// Microservicios (compatibilidad y validador de CV): cómo se atendió cada
+// solicitud. remote = el microservicio respondió; fallback = no respondió y
+// la API usó su respaldo interno; local = no hay URL configurada.
+const microserviceRequests = new client.Counter({
+  name: 'sifce_microservice_requests_total',
+  help: 'Solicitudes a los microservicios por servicio y modo (remote, fallback, local)',
+  labelNames: ['service', 'mode'],
+  registers: [register],
+});
+
 // Los contadores con etiquetas no existen hasta su primer evento, y Prometheus
 // necesita un valor "antes" para calcular cuánto aumentaron. Se crean en 0
 // para que el primer login fallido o el primer análisis sí se cuenten (y las
 // gráficas muestren 0 en vez de "sin datos").
 ['success', 'invalid', 'locked', 'inactive'].forEach((result) => logins.inc({ result }, 0));
 ['completed', 'failed'].forEach((result) => aiAnalyses.inc({ provider: aiProvider.name, result }, 0));
+['compatibilidad', 'validador-cv'].forEach((service) =>
+  ['remote', 'fallback', 'local'].forEach((mode) => microserviceRequests.inc({ service, mode }, 0))
+);
 
 // Proveedor de IA configurado (valor 1 con la etiqueta del proveedor activo).
 const aiInfo = new client.Gauge({
@@ -112,4 +125,5 @@ module.exports = {
   recordApplication: () => applications.inc(),
   startAiTimer: () => aiDuration.startTimer({ provider: aiProvider.name }),
   recordAiAnalysis: (result) => aiAnalyses.inc({ provider: aiProvider.name, result }),
+  recordMicroservice: (service, mode) => microserviceRequests.inc({ service, mode }),
 };

@@ -1,7 +1,7 @@
 # Pruebas
 
 **Estado real de este apartado**: el proyecto tiene **pruebas manuales**
-(registro de la sección 1) y una **suite de 101 pruebas automáticas** de la
+(registro de la sección 1) y una **suite de 138 pruebas automáticas** de la
 API con Jest + Supertest (sección 2), que corre sola en CircleCI en cada push
 (etapa 4 · TEST del ciclo de vida). La sección 3 deja lo que aún no se
 automatizó (frontend y extremo a extremo).
@@ -90,7 +90,7 @@ Herramientas (etapa 4 · TEST del ciclo de vida):
 ### Cómo correrlas
 
 ```bash
-npm test            # desde la raíz: 101 pruebas en ~20 s
+npm test            # desde la raíz: 25 de microservicios + 113 de la API
 ```
 
 Necesita PostgreSQL con las credenciales de `whatever/.env`. Las pruebas
@@ -112,10 +112,15 @@ corre exactamente el mismo comando después de que el job `build` pasa.
 | `company-admin.test.js` | RF14, RF15, RF18, RF19, reportes | información de la empresa, usuarios internos, criterios, etapas, resumen de reportes y exportación CSV |
 | `superadmin.test.js` | RF04, gestión global | empresas (creación operable, desactivación que corta sesiones) y gestión global de usuarios (filtros, desbloqueo, activar/desactivar, contraseña) |
 | `candidate-profile.test.js` | RF06 | perfil y sus 5 secciones, valores por defecto, vinculación por código |
+| `microservicios.test.js` | RF07, RF09, RF11 | la API con los dos microservicios encendidos de verdad (subir CV → postularse → compatibilidad) y su respaldo interno cuando se apagan |
+
+Además, `microservicios/tests/` tiene 25 pruebas propias de los dos
+microservicios (validador, servicio y endpoint de cada uno); ver
+`docs/MICROSERVICIOS.md`.
 
 Encontraron y se corrigió un error real: la extracción de texto de los PDF
 fallaba cuando el archivo llegaba en un entorno aislado (`bad XRef entry`);
-ahora `whatever/utils/pdfExtractor.js` entrega a la librería los bytes como
+ahora el servicio que lee los PDF (hoy `microservicios/validador-cv/service.js`) entrega a la librería los bytes como
 `Uint8Array` propio.
 
 ## 3. Lo que aún no se automatizó

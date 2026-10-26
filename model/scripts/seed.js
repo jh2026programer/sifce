@@ -9,7 +9,7 @@ const path = require('path');
 const db = require('../db');
 const authService = require('../../whatever/services/authService');
 const compatibilityService = require('../../whatever/services/compatibilityService');
-const { extractTextFromPdf } = require('../../whatever/utils/pdfExtractor');
+const microservicios = require('../../whatever/services/microservicios');
 const config = require('../../whatever/config/env');
 
 const DEMO_PASSWORD = 'Demo1234!';
@@ -104,7 +104,7 @@ async function createCandidateWithResume(client, { fullName, email, headline, lo
     const pdfBuffer = buildSimplePdf(resumeLines);
     fs.writeFileSync(filePath, pdfBuffer);
 
-    const extraction = await extractTextFromPdf(filePath);
+    const extraction = await microservicios.validarCv(pdfBuffer);
     resume = (
       await client.query(
         `INSERT INTO resumes (candidate_id, file_name, file_path, file_size_bytes, status, extracted_text, extraction_error)

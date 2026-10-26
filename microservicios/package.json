@@ -1,0 +1,45 @@
+{
+  "name": "sifce-microservicios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SIFCE - Microservicios independientes: compatibilidad (puntaje ponderado) y validador de hojas de vida (PDF)",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node iniciar.js",
+    "compatibilidad": "node compatibilidad/server.js",
+    "validador-cv": "node validador-cv/server.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "supertest": "^7.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "verbose": true,
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "reports",
+          "outputName": "junit.xml",
+          "classNameTemplate": "{classname}",
+          "titleTemplate": "{title}",
+          "addFileAttribute": "true"
+        }
+      ]
+    ]
+  }
+}

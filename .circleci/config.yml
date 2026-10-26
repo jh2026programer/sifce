@@ -4,7 +4,7 @@
 # Cada vez que se sube código a GitHub se ejecuta el flujo "build-y-pruebas":
 #
 #   build  (ciclo de vida, etapa 3 · BUILD)
-#     instala dependencias, revisa la sintaxis de model/ y whatever/,
+#     instala dependencias, revisa la sintaxis de model/, whatever/ y microservicios/,
 #     verifica que la API carga y compila view/ para producción.
 #
 #   test   (ciclo de vida, etapa 4 · TEST) — solo si build pasó
@@ -66,9 +66,9 @@ jobs:
       - run:
           name: Revisar sintaxis de la API y los modelos
           command: |
-            find model whatever -name "*.js" -not -path "*/node_modules/*" -print0 \
+            find model whatever microservicios -name "*.js" -not -path "*/node_modules/*" -print0 \
               | xargs -0 -n1 node --check
-            echo "Sintaxis correcta en model/ y whatever/"
+            echo "Sintaxis correcta en model/, whatever/ y microservicios/"
 
       - run:
           name: Verificar que la API carga completa
@@ -93,7 +93,7 @@ jobs:
             mkdir -p artifacts
             (cd view/dist && zip -qr ../../artifacts/sifce-web.zip .)
             git archive --format=zip -o artifacts/sifce-api.zip HEAD \
-              model whatever view/package.json package.json package-lock.json README.md .env.example
+              model whatever microservicios view/package.json package.json package-lock.json README.md .env.example
             ls -lh artifacts
 
       - store_artifacts:
@@ -117,9 +117,16 @@ jobs:
       - store_test_results:
           path: whatever/reports
 
+      - store_test_results:
+          path: microservicios/reports
+
       - store_artifacts:
           path: whatever/reports
           destination: reportes-de-pruebas
+
+      - store_artifacts:
+          path: microservicios/reports
+          destination: reportes-de-pruebas-microservicios
 
 workflows:
   build-y-pruebas:

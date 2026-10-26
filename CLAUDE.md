@@ -47,6 +47,7 @@ sifce/
   model/       (schema.sql, db.js, *.model.js, scripts/)
   whatever/    (API Express, .env)
   view/        (React + Vite, .env)
+  microservicios/ (compatibilidad + validador-cv; fuera de Docker, ver sección 12)
   docs/        (ARQUITECTURA, MODULO_IA, SEGURIDAD, TRAZABILIDAD, PRUEBAS, DESPLIEGUE)
   README.md, CLAUDE.md, .gitignore, .env.example (resumen de ambos .env)
 ```
@@ -102,7 +103,7 @@ Tablas: `companies`, `users` (con `failed_login_attempts`, `locked_until`), `log
 
 ## 9. Pendientes y limitaciones conocidas
 
-- Pruebas automáticas solo de la API (101, Jest + Supertest en `whatever/tests/`, `npm test`); sin pruebas automáticas de la interfaz ni E2E.
+- Pruebas automáticas: 113 de la API (`whatever/tests/`) + 25 de los microservicios (`microservicios/tests/`), Jest + Supertest, `npm test` corre ambas; sin pruebas automáticas de la interfaz ni E2E.
 - Sin migraciones de BD.
 - Desplegado solo en el PC del usuario con Docker Swarm (no en la nube). HTTPS no configurado.
 - No probado con servicios reales: reCAPTCHA, SMTP, pruebas de carga, multi-navegador.
@@ -123,6 +124,15 @@ Herramientas elegidas por etapa (a partir de la diapositiva del curso; OPERATE s
 8. MONITOR → New Relic APM ✅ (cuenta del usuario, región US). Agente cargado por `whatever/instrumentation.js` (primera línea de server.js) solo si hay clave; en Swarm la clave sale de `deploy/.newrelic-key` (gitignored, debe ser la *Ingest - License* completa, 40 caracteres, termina en NRAL) → secreto → `NEW_RELIC_LICENSE_KEY_FILE`. App en New Relic: "SIFCE (Docker Swarm)". No envía cuerpos ni cabeceras de auth. Guía en `docs/MONITOREO.md`.
 
 Al trabajar cada etapa, decir siempre en qué número/etapa del ciclo estamos. Marcar en Trello (tablero "Mi tablero de Trello") las tarjetas completadas.
+
+## 12. Microservicios (2026-10-25)
+
+Pedido del usuario: 2 microservicios "como software" (no Docker), cada uno con 3 scripts separados: endpoint (`server.js`), validador (`validator.js`) y servicio (`service.js`). Carpeta `microservicios/` (workspace npm propio, deps express + pdf-parse). Guía: `docs/MICROSERVICIOS.md`.
+- **compatibilidad** (:4101, `POST /compatibilidad`): promedio ponderado de los 4 criterios con los pesos de la empresa + nivel alta (≥75) / media (≥50) / baja. Lo llama `compatibilityService.runAnalysis` (los puntajes de la IA se acotan a 0-100 antes).
+- **validador-cv** (:4102, `POST /validar-cv`, PDF crudo con `Content-Type: application/pdf`): valida tipo, tamaño (5 MB) y firma `%PDF-`, extrae texto y detecta correo/teléfono/habilidades. Lo llaman `resumes.controller.uploadResume` (responde `detectedData`) y `seed.js`. Reemplazó a `whatever/utils/pdfExtractor.js` (borrado).
+- Cliente: `whatever/services/microservicios.js`. URLs en `whatever/.env` (`MS_COMPATIBILIDAD_URL`, `MS_VALIDADOR_CV_URL`, `MS_TIMEOUT_MS`). Si la URL está vacía o el microservicio no responde, la API ejecuta el mismo código en proceso (respaldo) → SIFCE nunca se cae por ellos. Métrica `sifce_microservice_requests_total{service, mode=remote|fallback|local}`.
+- Arranque: `npm run microservicios` (ambos) o `npm run ms:compatibilidad` / `npm run ms:validador-cv`. Escuchan en 127.0.0.1; en Swarm la API los alcanza por `host.docker.internal` (docker-stack.yml). La imagen de la API incluye `microservicios/` para el respaldo.
+- Verificado: pruebas 138/138, flujo real desde Docker en modo remoto y respaldo con los microservicios apagados.
 
 ## 11. Forma de trabajo y seguridad
 

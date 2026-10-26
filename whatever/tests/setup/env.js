@@ -17,6 +17,10 @@ Object.assign(process.env, {
   CAPTCHA_ENABLED: 'false',
   OTP_ENABLED: 'false',
   LOGIN_MAX_ATTEMPTS: '5',
+  // Sin microservicios: la API usa su código en el mismo proceso. La prueba
+  // microservicios.test.js los levanta de verdad y fija estas URL.
+  MS_COMPATIBILIDAD_URL: '',
+  MS_VALIDADOR_CV_URL: '',
   RESUME_UPLOAD_DIR: path.join(os.tmpdir(), 'sifce-test-uploads'),
 });
 

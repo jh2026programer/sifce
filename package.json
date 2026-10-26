@@ -6,7 +6,8 @@
   "workspaces": [
     "model",
     "whatever",
-    "view"
+    "view",
+    "microservicios"
   ],
   "scripts": {
     "dev:api": "npm run dev -w whatever",
@@ -15,7 +16,10 @@
     "build:web": "npm run build -w view",
     "db:create": "npm run db:create -w model",
     "db:seed": "npm run db:seed -w model",
-    "test": "npm test -w whatever"
+    "test": "npm test -w microservicios && npm test -w whatever",
+    "microservicios": "npm start -w microservicios",
+    "ms:compatibilidad": "npm run compatibilidad -w microservicios",
+    "ms:validador-cv": "npm run validador-cv -w microservicios"
   },
   "engines": {
     "node": ">=18.0.0"

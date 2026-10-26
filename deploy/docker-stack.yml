@@ -81,6 +81,12 @@ services:
       JWT_SECRET_FILE: /run/secrets/sifce_jwt_secret
       AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_API_KEY_FILE: /run/secrets/sifce_ai_api_key
+      # Microservicios: corren FUERA de Docker, como programas en el PC
+      # ("npm run microservicios"). host.docker.internal es el PC visto desde
+      # el contenedor. Si no están encendidos, la API usa su respaldo interno.
+      MS_COMPATIBILIDAD_URL: http://host.docker.internal:4101
+      MS_VALIDADOR_CV_URL: http://host.docker.internal:4102
+      MS_TIMEOUT_MS: "3000"
       # MONITOR (etapa 8): New Relic APM; sin clave el agente no se activa.
       NEW_RELIC_LICENSE_KEY_FILE: /run/secrets/sifce_newrelic_license_key
       NEW_RELIC_APP_NAME: SIFCE (Docker Swarm)

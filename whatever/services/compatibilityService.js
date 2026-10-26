@@ -5,6 +5,11 @@ const criteriaModel = require('../../model/criteria.model.js');
 const aiResultModel = require('../../model/aiResult.model.js');
 const aiProvider = require('./ai/aiProvider');
 const metrics = require('./metrics');
+const microservicios = require('./microservicios');
+
+// Un proveedor de IA real podría devolver un valor fuera de rango; se acota a
+// 0-100 antes de enviarlo al microservicio, que rechaza puntajes inválidos.
+const toScore = (n) => Math.max(0, Math.min(100, Number(n) || 0));
 
 const DEFAULT_WEIGHT = 25; // repartido en partes iguales si la empresa no configuró criterios (RF14)
 
@@ -53,12 +58,16 @@ async function runAnalysis({ applicationId }) {
     const result = await aiProvider.analyze({ resumeText, candidateProfile, vacancy });
     const weights = await getCategoryWeights(application.company_id);
 
-    const overallScore =
-      (result.educationScore * weights.formacion +
-        result.experienceScore * weights.experiencia +
-        result.skillsScore * weights.habilidades +
-        result.languagesScore * weights.idiomas) /
-      100;
+    // El promedio ponderado lo calcula el microservicio de compatibilidad.
+    const { compatibilidad: overallScore } = await microservicios.calcularCompatibilidad(
+      {
+        formacion: toScore(result.educationScore),
+        experiencia: toScore(result.experienceScore),
+        habilidades: toScore(result.skillsScore),
+        idiomas: toScore(result.languagesScore),
+      },
+      weights
+    );
 
     await aiResultModel.saveCompleted(applicationId, { provider: aiProvider.name, overallScore, result });
     stopTimer();

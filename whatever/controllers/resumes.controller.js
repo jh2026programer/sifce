@@ -1,9 +1,10 @@
+const fs = require('fs');
 const path = require('path');
 const resumeModel = require('../../model/resume.model.js');
 const view = require('../presenters/response');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
-const { extractTextFromPdf } = require('../utils/pdfExtractor');
+const microservicios = require('../services/microservicios');
 const { getProfileIdForUser } = require('./candidates.controller.js');
 const { logActivity } = require('../services/activityLogService');
 
@@ -19,9 +20,10 @@ const uploadResume = asyncHandler(async (req, res) => {
     sizeBytes: req.file.size,
   });
 
-  // Extracción de texto (Sección 10): no bloquea la respuesta de carga si falla,
-  // pero se informa el resultado en el propio registro para consulta posterior.
-  const extraction = await extractTextFromPdf(req.file.path);
+  // Validación y extracción de texto en el microservicio validador-cv
+  // (Sección 10): no bloquea la carga si falla, pero el resultado queda en el
+  // propio registro para consulta posterior.
+  const extraction = await microservicios.validarCv(fs.readFileSync(req.file.path));
   await resumeModel.saveExtraction(resume.id, extraction);
 
   await logActivity({ userId: req.user.id, action: 'upload_resume', entityType: 'resume', entityId: resume.id });
@@ -31,6 +33,7 @@ const uploadResume = asyncHandler(async (req, res) => {
     fileName: resume.file_name,
     status: extraction.success ? 'extracted' : 'extraction_failed',
     extractionError: extraction.error,
+    detectedData: extraction.datos,
   });
 });
 

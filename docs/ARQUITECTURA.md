@@ -151,7 +151,7 @@ sifce/
     controllers/        coordinación de cada RF (validan, llaman modelos y presentadores)
     services/           reglas de negocio: auth, OTP, CAPTCHA, IA, compatibilidad, logs
     presenters/         forma del JSON de respuesta (response.js, user.view.js, report.view.js)
-    utils/              AppError, asyncHandler, scope (aislamiento), accessCode, pdfExtractor
+    utils/              AppError, asyncHandler, scope (aislamiento), accessCode
     uploads/resumes/    PDF de hojas de vida
   view/               VIEW — lo que ve el usuario (React + Vite)
     src/pages/          pantallas, organizadas por rol
@@ -234,6 +234,22 @@ aislamiento por empresa depende de que cada consulta filtre por
 │               PostgreSQL (aislado por company_id)            │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+### Microservicios
+
+Dos procesos independientes (carpeta `microservicios/`, fuera de Docker) a los
+que `whatever/services/microservicios.js` llama por HTTP:
+
+```
+whatever/ ──POST /validar-cv──────> validador-cv   (puerto 4102)
+          ──POST /compatibilidad──> compatibilidad (puerto 4101)
+```
+
+Cada uno tiene endpoint (`server.js`), validador (`validator.js`) y servicio
+(`service.js`). No acceden a la base de datos: reciben datos y devuelven un
+resultado, así que no rompen el aislamiento por empresa. Si no responden, la
+API usa su mismo código en proceso (respaldo). Detalle en
+`docs/MICROSERVICIOS.md`.
 
 ## Módulos funcionales (Sección 2 del prompt / SRS §2.1)
 
