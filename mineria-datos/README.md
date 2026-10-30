@@ -143,3 +143,49 @@ sesión**. Se usa arrastrando bloques ("widgets") y uniéndolos con líneas.
    celdas vacías.
 
 Con eso el paso 1 queda listo y comprobado en Orange.
+
+## 2. Depuración de datos (en Orange)
+
+Cadena de widgets, cada uno conectado al anterior:
+
+```
+File → Unique → Edit Domain → Formula → Select Rows → Select Columns → Impute → Save Data
+```
+
+| # | Widget (grupo) | Qué hace | Configuración |
+|---|---|---|---|
+| 1 | **Unique** (Transform) | Quita los duplicados | Dejar todo por defecto: agrupa por todas las columnas y se queda con la primera |
+| 2 | **Edit Domain** (Data) | Corrige categorías mal escritas | `ciudad`: BOGOTÁ y bogota → Bogotá; Medellin y medellín → Medellín; Cali. → Cali; Barranquila → Barranquilla. `modalidad`: PRESENCIAL → Presencial; Remotoo y remoto → Remoto; hibrido → Híbrido. `nivel_ingles`: Avanzdo → Avanzado; basico → Básico; intermedio y B1 → Intermedio. Escribir el nombre correcto une los valores |
+| 3 | **Formula** (Transform) | Marca los errores y los atípicos con dos columnas nuevas | Las dos expresiones de abajo |
+| 4 | **Select Rows** (Transform) | Elimina lo marcado | `dato_erroneo` is 0 · `valor_atipico` is 0 · `seleccionado` is defined |
+| 5 | **Select Columns** (Transform) | Quita las dos columnas auxiliares | Pasar `dato_erroneo` y `valor_atipico` a *Ignored* |
+| 6 | **Impute** (Transform) | Rellena los vacíos que quedan | *Average/Most frequent*: promedio en números, valor más frecuente en categorías |
+| 7 | **Save Data** (Data) | Guarda el dataset limpio | `datos/postulaciones_limpias.csv` |
+
+Expresión de `dato_erroneo` (Numeric):
+
+```
+1 if (edad < 18 or edad > 75 or anios_experiencia < 0 or anios_experiencia > edad - 14 or compatibilidad < 0 or compatibilidad > 100 or puntaje_habilidades > 100 or salario_aspirado < 500000 or habilidades_cumplidas > habilidades_requeridas or fecha_postulacion < 1735689600 or fecha_postulacion > 1790726400 or (seleccionado == 'Sí' and estado_final != 'Seleccionado') or (seleccionado == 'No' and estado_final == 'Seleccionado')) else 0
+```
+
+Expresión de `valor_atipico` (Numeric):
+
+```
+1 if (anios_experiencia > 35 or palabras_cv > 5000 or paginas_cv > 8 or certificaciones > 12 or tiempo_analisis_ia_seg > 40 or dias_en_proceso > 60 or salario_aspirado > 2.5 * salario_ofrecido) else 0
+```
+
+Las fechas se comparan en segundos: 1735689600 = 1 de enero de 2025 y
+1790726400 = 30 de septiembre de 2026. Los límites de los atípicos se eligieron
+mirando el Box Plot de cada columna.
+
+Resultado esperado (comprobado con el motor de Orange 3.40 contra
+`control_calidad.csv`):
+
+| Después de | Filas | Qué salió |
+|---|---:|---|
+| File | 100.000 | — |
+| Unique | 95.000 | los 5.000 duplicados |
+| Select Rows | 78.447 | errores numéricos y lógicos, atípicos, filas sin fecha y sin `seleccionado` |
+| Impute | 78.447 | ninguna fila; se rellenan unos 650 vacíos por columna |
+
+Ninguna fila limpia se pierde por error: las 68.161 limpias únicas llegan al final.
