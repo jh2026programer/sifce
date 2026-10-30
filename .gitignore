@@ -31,3 +31,4 @@ coverage/
 deploy/.pagerduty-key
 deploy/.grafana-admin.txt
 deploy/.newrelic-key
+mineria-datos/datos/
