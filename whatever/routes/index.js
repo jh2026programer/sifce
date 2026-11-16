@@ -10,6 +10,7 @@ router.use('/applications', require('./applications.routes.js'));
 router.use('/criteria', require('./criteria.routes.js'));
 router.use('/stages', require('./stages.routes.js'));
 router.use('/reports', require('./reports.routes.js'));
+router.use('/mineria', require('./mineria.routes.js'));
 
 router.get('/health', (req, res) => res.json({ success: true, message: 'SIFCE API operativa.' }));
 

@@ -337,6 +337,24 @@ fs.writeFileSync(
   ['fila,id_postulacion,anomalia,perfil_real', ...salida.map(({ f, tipo }, i) => `${i + 2},${f.id_postulacion},${tipo},${perfiles.get(f.id_postulacion)}`)].join('\n') + '\n'
 );
 
+// Candidatos nuevos: 30 postulaciones limpias cuyo resultado "aún no se
+// conoce", para que Orange (widget Predictions) prediga si serán
+// seleccionados. Se generan después del dataset, así no lo alteran. Lo que
+// pasó de verdad queda aparte, para comparar la predicción al final.
+const NUEVOS = 30;
+const OCULTAS = ['etapa_maxima', 'estado_final', 'dias_en_proceso', 'seleccionado'];
+const nuevos = [];
+for (let i = 1; i <= NUEVOS; i++) nuevos.push(postulacion(900000 + i));
+const colNuevos = columnas.filter((c) => !OCULTAS.includes(c));
+fs.writeFileSync(
+  path.join(dir, 'candidatos_nuevos.csv'),
+  [colNuevos.join(','), ...nuevos.map((f) => colNuevos.map((c) => csv(f[c])).join(','))].join('\n') + '\n'
+);
+fs.writeFileSync(
+  path.join(dir, 'candidatos_nuevos_resultado_real.csv'),
+  ['id_postulacion,seleccionado_real', ...nuevos.map((f) => `${f.id_postulacion},${f.seleccionado}`)].join('\n') + '\n'
+);
+
 // Resumen en consola.
 const cuenta = (prefijo) => salida.filter((s) => s.tipo.startsWith(prefijo)).length;
 const seleccionados = filas.filter((f) => f.seleccionado === 'Sí').length;

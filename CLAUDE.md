@@ -103,7 +103,7 @@ Tablas: `companies`, `users` (con `failed_login_attempts`, `locked_until`), `log
 
 ## 9. Pendientes y limitaciones conocidas
 
-- Pruebas automáticas: 113 de la API (`whatever/tests/`) + 25 de los microservicios (`microservicios/tests/`), Jest + Supertest, `npm test` corre ambas; sin pruebas automáticas de la interfaz ni E2E.
+- Pruebas automáticas: 122 de la API (`whatever/tests/`) + 25 de los microservicios (`microservicios/tests/`), Jest + Supertest, `npm test` corre ambas; sin pruebas automáticas de la interfaz ni E2E.
 - Sin migraciones de BD.
 - Desplegado solo en el PC del usuario con Docker Swarm (no en la nube). HTTPS no configurado.
 - No probado con servicios reales: reCAPTCHA, SMTP, pruebas de carga, multi-navegador.
@@ -133,6 +133,14 @@ Pedido del usuario: 2 microservicios "como software" (no Docker), cada uno con 3
 - Cliente: `whatever/services/microservicios.js`. URLs en `whatever/.env` (`MS_COMPATIBILIDAD_URL`, `MS_VALIDADOR_CV_URL`, `MS_TIMEOUT_MS`). Si la URL está vacía o el microservicio no responde, la API ejecuta el mismo código en proceso (respaldo) → SIFCE nunca se cae por ellos. Métrica `sifce_microservice_requests_total{service, mode=remote|fallback|local}`.
 - Arranque: `npm run microservicios` (ambos) o `npm run ms:compatibilidad` / `npm run ms:validador-cv`. Escuchan en 127.0.0.1; en Swarm la API los alcanza por `host.docker.internal` (docker-stack.yml). La imagen de la API incluye `microservicios/` para el respaldo.
 - Verificado: pruebas 138/138, flujo real desde Docker en modo remoto y respaldo con los microservicios apagados.
+
+## 13. Minería de datos (2026-10-29 / 2026-11-16)
+
+Pedido del curso: proceso completo de minería (1 recolección, 2 depuración, 3 análisis, 4 interpretación) con **Orange** (el usuario tiene Orange 3.40 instalado; su Python en `%LOCALAPPDATA%\Programs\Orange\python.exe` sirve para comprobar pasos con el motor real), con diagrama, miles de datos, predicción y gráficas; y además la predicción y las gráficas **dentro de SIFCE**. Todo en `mineria-datos/` (guía completa en su `README.md`).
+- `generar_dataset.js`: 100.000 postulaciones sintéticas con forma de SIFCE (semilla fija), 10 % atípicos + 20 % sucios (8 % vacíos, 7 % erróneos, 5 % duplicados). Patrones sembrados: compatibilidad, brecha salarial > 30 %, inglés avanzado en tecnología, certificaciones, perfiles (Junior/Semisenior/Senior/Reconversión), estacionalidad. Salidas en `datos/` (gitignored, se regeneran): `postulaciones_sifce.csv`, `control_calidad.csv` (anomalía y perfil real por fila), `candidatos_nuevos.csv` (30 sin resultado, para el widget Predictions) y su resultado real.
+- Depuración en Orange: Unique → Edit Domain → Formula (`dato_erroneo`, `valor_atipico`) → Select Rows → Select Columns → Impute → 78.447 filas. Para predecir: excluir `estado_final`, `etapa_maxima`, `dias_en_proceso` (fuga de información) y normalizar.
+- `entrenar_modelo.js`: misma depuración en Node, análisis, regresión logística (70/30, exactitud 83,9 %, AUC 0,865) y k-Means k=4 → `whatever/services/mineria/modelo_seleccion.json` (versionado). `codificacion.js` es compartido por el entrenamiento y la API.
+- SIFCE: `GET /api/v1/mineria/resumen` y `POST /api/v1/mineria/prediccion` (superadmin, company_admin, recruiter; datos sintéticos, no rompen el aislamiento). Página `view/src/pages/DataMiningPage.jsx` (`/mineria`, menú "Minería de datos"): pestañas Depuración, Análisis, Modelo y perfiles, Predecir candidato. Pruebas en `whatever/tests/mineria.test.js`.
 
 ## 11. Forma de trabajo y seguridad
 

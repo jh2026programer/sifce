@@ -31,6 +31,7 @@ import PublicVacancyPage from './pages/candidate/PublicVacancyPage.jsx';
 import MyApplicationsPage from './pages/candidate/MyApplicationsPage.jsx';
 
 import ApplicationDetailPage from './pages/ApplicationDetailPage.jsx';
+import DataMiningPage from './pages/DataMiningPage.jsx';
 
 function withLayout(element) {
   return <AppLayout>{element}</AppLayout>;
@@ -48,6 +49,10 @@ export default function App() {
       {/* Cualquier usuario autenticado */}
       <Route path="/dashboard" element={<ProtectedRoute>{withLayout(<DashboardPage />)}</ProtectedRoute>} />
       <Route path="/account" element={<ProtectedRoute>{withLayout(<MyAccountPage />)}</ProtectedRoute>} />
+      <Route
+        path="/mineria"
+        element={<ProtectedRoute roles={['superadmin', 'company_admin', 'recruiter']}>{withLayout(<DataMiningPage />)}</ProtectedRoute>}
+      />
       <Route path="/applications/:id" element={<ProtectedRoute>{withLayout(<ApplicationDetailPage />)}</ProtectedRoute>} />
 
       {/* Superadministrador (RF04 + gestión global de usuarios) */}

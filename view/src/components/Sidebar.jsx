@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
   IconDashboard, IconBuilding, IconUsers, IconBriefcase, IconFile,
-  IconChart, IconSliders, IconLayers, IconLink, IconCompass, IconArrowSwitch,
+  IconChart, IconSliders, IconLayers, IconLink, IconCompass, IconArrowSwitch, IconTrendingUp,
 } from './Icons.jsx';
 
 function Item({ to, icon, children }) {
@@ -27,6 +27,7 @@ export default function Sidebar() {
           <div className="sidebar-section-title">Plataforma</div>
           <Item to="/superadmin/companies" icon={<IconBuilding size={17} />}>Empresas</Item>
           <Item to="/superadmin/users" icon={<IconUsers size={17} />}>Usuarios</Item>
+          <Item to="/mineria" icon={<IconTrendingUp size={17} />}>Minería de datos</Item>
         </>
       )}
 
@@ -45,6 +46,7 @@ export default function Sidebar() {
           <div className="sidebar-section-title">Selección de personal</div>
           <Item to="/vacancies" icon={<IconBriefcase size={17} />}>Vacantes</Item>
           <Item to="/reports" icon={<IconChart size={17} />}>Reportes</Item>
+          <Item to="/mineria" icon={<IconTrendingUp size={17} />}>Minería de datos</Item>
         </>
       )}
 

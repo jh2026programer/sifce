@@ -1,0 +1,605 @@
+{
+  "generado": "2026-11-16T05:16:32.222Z",
+  "fuente": "Dataset sintético de minería de datos (mineria-datos/postulaciones_sifce.csv)",
+  "depuracion": {
+    "pasos": [
+      {
+        "paso": "Datos recolectados",
+        "filas": 100000
+      },
+      {
+        "paso": "Sin duplicados",
+        "filas": 95000
+      },
+      {
+        "paso": "Sin errores ni atípicos",
+        "filas": 78447
+      },
+      {
+        "paso": "Vacíos imputados",
+        "filas": 78447
+      }
+    ],
+    "duplicados": 5000,
+    "categorias_corregidas": 1705,
+    "erroneos_eliminados": 5945,
+    "atipicos_eliminados": 9893,
+    "sin_objetivo_eliminados": 715,
+    "valores_imputados": 12565
+  },
+  "resumen": {
+    "postulaciones_analizadas": 78447,
+    "seleccionados": 15992,
+    "tasa_seleccion": 20.4
+  },
+  "analisis": {
+    "por_compatibilidad": [
+      {
+        "grupo": "Baja",
+        "postulaciones": 13418,
+        "tasa_seleccion": 0.5
+      },
+      {
+        "grupo": "Media",
+        "postulaciones": 28242,
+        "tasa_seleccion": 7.6
+      },
+      {
+        "grupo": "Alta",
+        "postulaciones": 36787,
+        "tasa_seleccion": 37.5
+      }
+    ],
+    "ingles_por_sector": [
+      {
+        "nivel_ingles": "Ninguno",
+        "tecnologia": 6.2,
+        "otros_sectores": 11.9
+      },
+      {
+        "nivel_ingles": "Básico",
+        "tecnologia": 10.9,
+        "otros_sectores": 17
+      },
+      {
+        "nivel_ingles": "Intermedio",
+        "tecnologia": 21.6,
+        "otros_sectores": 22.2
+      },
+      {
+        "nivel_ingles": "Avanzado",
+        "tecnologia": 40.9,
+        "otros_sectores": 24.3
+      },
+      {
+        "nivel_ingles": "Nativo",
+        "tecnologia": 50.5,
+        "otros_sectores": 29.3
+      }
+    ],
+    "por_brecha_salarial": [
+      {
+        "grupo": "Pide hasta 30 %",
+        "postulaciones": 64758,
+        "tasa_seleccion": 22.8,
+        "tasa_retiro": 4.4
+      },
+      {
+        "grupo": "Pide más del 30 %",
+        "postulaciones": 13689,
+        "tasa_seleccion": 9,
+        "tasa_retiro": 43.1
+      }
+    ],
+    "por_sector": [
+      {
+        "grupo": "Tecnología",
+        "postulaciones": 23958,
+        "tasa_seleccion": 21.3
+      },
+      {
+        "grupo": "Retail",
+        "postulaciones": 12533,
+        "tasa_seleccion": 20.3
+      },
+      {
+        "grupo": "Salud",
+        "postulaciones": 9207,
+        "tasa_seleccion": 23.6
+      },
+      {
+        "grupo": "Finanzas",
+        "postulaciones": 9302,
+        "tasa_seleccion": 18.3
+      },
+      {
+        "grupo": "Manufactura",
+        "postulaciones": 8652,
+        "tasa_seleccion": 19.7
+      },
+      {
+        "grupo": "Educación",
+        "postulaciones": 6241,
+        "tasa_seleccion": 15.1
+      },
+      {
+        "grupo": "Logística",
+        "postulaciones": 8554,
+        "tasa_seleccion": 21.2
+      }
+    ],
+    "por_educacion": [
+      {
+        "grupo": "Bachiller",
+        "postulaciones": 6956,
+        "tasa_seleccion": 5.7
+      },
+      {
+        "grupo": "Técnico",
+        "postulaciones": 11275,
+        "tasa_seleccion": 9.3
+      },
+      {
+        "grupo": "Tecnólogo",
+        "postulaciones": 15625,
+        "tasa_seleccion": 15.7
+      },
+      {
+        "grupo": "Profesional",
+        "postulaciones": 32176,
+        "tasa_seleccion": 24.5
+      },
+      {
+        "grupo": "Especialización",
+        "postulaciones": 10064,
+        "tasa_seleccion": 34.2
+      },
+      {
+        "grupo": "Maestría",
+        "postulaciones": 2351,
+        "tasa_seleccion": 33.3
+      }
+    ],
+    "embudo": [
+      {
+        "etapa": "Postulado",
+        "candidatos": 78447
+      },
+      {
+        "etapa": "Revisión",
+        "candidatos": 74754
+      },
+      {
+        "etapa": "Entrevista",
+        "candidatos": 61926
+      },
+      {
+        "etapa": "Prueba técnica",
+        "candidatos": 39461
+      },
+      {
+        "etapa": "Oferta",
+        "candidatos": 15992
+      }
+    ],
+    "por_mes": [
+      {
+        "mes": "2025-01",
+        "postulaciones": 4909
+      },
+      {
+        "mes": "2025-02",
+        "postulaciones": 4318
+      },
+      {
+        "mes": "2025-03",
+        "postulaciones": 4842
+      },
+      {
+        "mes": "2025-04",
+        "postulaciones": 2758
+      },
+      {
+        "mes": "2025-05",
+        "postulaciones": 2915
+      },
+      {
+        "mes": "2025-06",
+        "postulaciones": 2785
+      },
+      {
+        "mes": "2025-07",
+        "postulaciones": 4882
+      },
+      {
+        "mes": "2025-08",
+        "postulaciones": 4818
+      },
+      {
+        "mes": "2025-09",
+        "postulaciones": 2822
+      },
+      {
+        "mes": "2025-10",
+        "postulaciones": 2878
+      },
+      {
+        "mes": "2025-11",
+        "postulaciones": 2738
+      },
+      {
+        "mes": "2025-12",
+        "postulaciones": 2945
+      },
+      {
+        "mes": "2026-01",
+        "postulaciones": 4803
+      },
+      {
+        "mes": "2026-02",
+        "postulaciones": 4245
+      },
+      {
+        "mes": "2026-03",
+        "postulaciones": 4830
+      },
+      {
+        "mes": "2026-04",
+        "postulaciones": 2757
+      },
+      {
+        "mes": "2026-05",
+        "postulaciones": 2798
+      },
+      {
+        "mes": "2026-06",
+        "postulaciones": 2859
+      },
+      {
+        "mes": "2026-07",
+        "postulaciones": 4757
+      },
+      {
+        "mes": "2026-08",
+        "postulaciones": 4874
+      },
+      {
+        "mes": "2026-09",
+        "postulaciones": 2914
+      }
+    ]
+  },
+  "modelo": {
+    "tipo": "Regresión logística (L2)",
+    "entrenamiento": 54912,
+    "prueba": 23535,
+    "umbral": 0.5,
+    "intercepto": -2.2770529620587108,
+    "variables": [
+      {
+        "nombre": "compatibilidad",
+        "etiqueta": "Compatibilidad con la vacante",
+        "media": 69.77080893065393,
+        "desviacion": 18.37758641028239,
+        "coeficiente": 1.8026836252470781
+      },
+      {
+        "nombre": "cobertura_habilidades",
+        "etiqueta": "Habilidades cumplidas (%)",
+        "media": 52.67847820583953,
+        "desviacion": 27.034257200291194,
+        "coeficiente": 0.1173356991035796
+      },
+      {
+        "nombre": "nivel_ingles",
+        "etiqueta": "Nivel de inglés",
+        "media": 1.7098812645698416,
+        "desviacion": 1.045660627780217,
+        "coeficiente": 0.0184978492064733
+      },
+      {
+        "nombre": "ingles_avanzado_tecnologia",
+        "etiqueta": "Inglés avanzado en tecnología",
+        "etiquetaNo": "Sin inglés avanzado (en tecnología)",
+        "media": 0.07145979020978686,
+        "desviacion": 0.25759132088041103,
+        "coeficiente": 0.26070314192672767
+      },
+      {
+        "nombre": "nivel_educativo",
+        "etiqueta": "Nivel educativo",
+        "media": 2.4359884906776426,
+        "desviacion": 1.227247767886585,
+        "coeficiente": 0.07644049459409694
+      },
+      {
+        "nombre": "anios_experiencia",
+        "etiqueta": "Años de experiencia",
+        "media": 5.693951595279785,
+        "desviacion": 6.077665015302522,
+        "coeficiente": 0.08244289650698616
+      },
+      {
+        "nombre": "experiencia_requerida",
+        "etiqueta": "Experiencia que pide la vacante",
+        "media": 2.62915209790376,
+        "desviacion": 1.670446907508515,
+        "coeficiente": -0.048795181603867276
+      },
+      {
+        "nombre": "certificaciones",
+        "etiqueta": "Certificaciones",
+        "media": 1.8628583916094612,
+        "desviacion": 1.3826339375405223,
+        "coeficiente": 0.1823175377357031
+      },
+      {
+        "nombre": "edad",
+        "etiqueta": "Edad",
+        "media": 32.6517737470879,
+        "desviacion": 10.931510104109757,
+        "coeficiente": -0.07935506967043139
+      },
+      {
+        "nombre": "brecha_salarial",
+        "etiqueta": "Brecha salarial (aspirado vs. ofrecido)",
+        "media": 14.770424005476565,
+        "desviacion": 19.237720544692582,
+        "coeficiente": 0.015837424615868404
+      },
+      {
+        "nombre": "pide_mas_30",
+        "etiqueta": "Pide más del 30 % sobre lo ofrecido",
+        "etiquetaNo": "No pide más del 30 % sobre lo ofrecido",
+        "media": 0.1761363636363427,
+        "desviacion": 0.3809361429967134,
+        "coeficiente": -0.8639888445862057
+      },
+      {
+        "nombre": "sector_Tecnología",
+        "etiqueta": "Sector Tecnología",
+        "media": 0.3060897435897356,
+        "desviacion": 0.4608674564978002,
+        "coeficiente": -0.019234619363783814
+      },
+      {
+        "nombre": "sector_Retail",
+        "etiqueta": "Sector Retail",
+        "media": 0.160311043123531,
+        "desviacion": 0.3668942798356015,
+        "coeficiente": 0.0012544717801388128
+      },
+      {
+        "nombre": "sector_Salud",
+        "etiqueta": "Sector Salud",
+        "media": 0.11807983682984301,
+        "desviacion": 0.32270263240963754,
+        "coeficiente": -0.0024282085602938784
+      },
+      {
+        "nombre": "sector_Finanzas",
+        "etiqueta": "Sector Finanzas",
+        "media": 0.11784309440560053,
+        "desviacion": 0.32242223792191976,
+        "coeficiente": 0.0031933330725624405
+      },
+      {
+        "nombre": "sector_Manufactura",
+        "etiqueta": "Sector Manufactura",
+        "media": 0.10908362470862905,
+        "desviacion": 0.31174410584501,
+        "coeficiente": 0.01625174997271355
+      },
+      {
+        "nombre": "sector_Educación",
+        "etiqueta": "Sector Educación",
+        "media": 0.07960008741258573,
+        "desviacion": 0.2706730749382839,
+        "coeficiente": 0.0054028706646148915
+      },
+      {
+        "nombre": "sector_Logística",
+        "etiqueta": "Sector Logística",
+        "media": 0.10899256993007425,
+        "desviacion": 0.3116298920678068,
+        "coeficiente": 0.00522908887380332
+      },
+      {
+        "nombre": "modalidad_Remoto",
+        "etiqueta": "Modalidad Remoto",
+        "media": 0.14140807109556952,
+        "desviacion": 0.34844200166525097,
+        "coeficiente": 0.004030720505675429
+      },
+      {
+        "nombre": "modalidad_Híbrido",
+        "etiqueta": "Modalidad Híbrido",
+        "media": 0.2463031759906159,
+        "desviacion": 0.43085719384456306,
+        "coeficiente": -0.0007644851497345306
+      },
+      {
+        "nombre": "modalidad_Presencial",
+        "etiqueta": "Modalidad Presencial",
+        "media": 0.6122887529140408,
+        "desviacion": 0.48722811492049767,
+        "coeficiente": -0.0022065401430804298
+      }
+    ],
+    "metricas": {
+      "exactitud": 83.9,
+      "exactitud_sin_modelo": 79.6,
+      "precision": 66.2,
+      "sensibilidad": 42.7,
+      "f1": 51.9,
+      "auc": 0.865
+    },
+    "matriz_confusion": {
+      "vp": 2045,
+      "fp": 1046,
+      "vn": 17696,
+      "fn": 2748
+    },
+    "roc": [
+      {
+        "umbral": 1,
+        "tasa_falsos_positivos": 0,
+        "tasa_verdaderos_positivos": 0
+      },
+      {
+        "umbral": 0.95,
+        "tasa_falsos_positivos": 0,
+        "tasa_verdaderos_positivos": 0
+      },
+      {
+        "umbral": 0.9,
+        "tasa_falsos_positivos": 0,
+        "tasa_verdaderos_positivos": 0.013
+      },
+      {
+        "umbral": 0.85,
+        "tasa_falsos_positivos": 0.001,
+        "tasa_verdaderos_positivos": 0.031
+      },
+      {
+        "umbral": 0.8,
+        "tasa_falsos_positivos": 0.002,
+        "tasa_verdaderos_positivos": 0.055
+      },
+      {
+        "umbral": 0.75,
+        "tasa_falsos_positivos": 0.007,
+        "tasa_verdaderos_positivos": 0.116
+      },
+      {
+        "umbral": 0.7,
+        "tasa_falsos_positivos": 0.012,
+        "tasa_verdaderos_positivos": 0.182
+      },
+      {
+        "umbral": 0.65,
+        "tasa_falsos_positivos": 0.018,
+        "tasa_verdaderos_positivos": 0.236
+      },
+      {
+        "umbral": 0.6,
+        "tasa_falsos_positivos": 0.027,
+        "tasa_verdaderos_positivos": 0.293
+      },
+      {
+        "umbral": 0.55,
+        "tasa_falsos_positivos": 0.04,
+        "tasa_verdaderos_positivos": 0.354
+      },
+      {
+        "umbral": 0.5,
+        "tasa_falsos_positivos": 0.056,
+        "tasa_verdaderos_positivos": 0.427
+      },
+      {
+        "umbral": 0.45,
+        "tasa_falsos_positivos": 0.075,
+        "tasa_verdaderos_positivos": 0.503
+      },
+      {
+        "umbral": 0.4,
+        "tasa_falsos_positivos": 0.1,
+        "tasa_verdaderos_positivos": 0.572
+      },
+      {
+        "umbral": 0.35,
+        "tasa_falsos_positivos": 0.127,
+        "tasa_verdaderos_positivos": 0.635
+      },
+      {
+        "umbral": 0.3,
+        "tasa_falsos_positivos": 0.16,
+        "tasa_verdaderos_positivos": 0.696
+      },
+      {
+        "umbral": 0.25,
+        "tasa_falsos_positivos": 0.204,
+        "tasa_verdaderos_positivos": 0.762
+      },
+      {
+        "umbral": 0.2,
+        "tasa_falsos_positivos": 0.258,
+        "tasa_verdaderos_positivos": 0.823
+      },
+      {
+        "umbral": 0.15,
+        "tasa_falsos_positivos": 0.325,
+        "tasa_verdaderos_positivos": 0.878
+      },
+      {
+        "umbral": 0.1,
+        "tasa_falsos_positivos": 0.419,
+        "tasa_verdaderos_positivos": 0.931
+      },
+      {
+        "umbral": 0.05,
+        "tasa_falsos_positivos": 0.567,
+        "tasa_verdaderos_positivos": 0.973
+      },
+      {
+        "umbral": 0,
+        "tasa_falsos_positivos": 1,
+        "tasa_verdaderos_positivos": 1
+      }
+    ]
+  },
+  "perfiles": [
+    {
+      "perfil": "En crecimiento",
+      "postulaciones": 28671,
+      "edad_promedio": 26.9,
+      "experiencia_promedio": 3.7,
+      "certificaciones_promedio": 0.9,
+      "educacion_frecuente": "Profesional",
+      "ingles_frecuente": "Intermedio",
+      "tasa_seleccion": 19.7,
+      "tasa_retiro": 8.5,
+      "perfil_real_mayoritario": "Semisenior",
+      "coincidencia_perfil_real": 50.6
+    },
+    {
+      "perfil": "Recién egresados",
+      "postulaciones": 17848,
+      "edad_promedio": 26.6,
+      "experiencia_promedio": 3.2,
+      "certificaciones_promedio": 3.2,
+      "educacion_frecuente": "Profesional",
+      "ingles_frecuente": "Intermedio",
+      "tasa_seleccion": 24.6,
+      "tasa_retiro": 8.2,
+      "perfil_real_mayoritario": "Junior",
+      "coincidencia_perfil_real": 52.5
+    },
+    {
+      "perfil": "Cambio de carrera",
+      "postulaciones": 16780,
+      "edad_promedio": 36.9,
+      "experiencia_promedio": 2,
+      "certificaciones_promedio": 1.3,
+      "educacion_frecuente": "Técnico",
+      "ingles_frecuente": "Básico",
+      "tasa_seleccion": 6.3,
+      "tasa_retiro": 9.1,
+      "perfil_real_mayoritario": "Reconversión",
+      "coincidencia_perfil_real": 57.9
+    },
+    {
+      "perfil": "Experimentados",
+      "postulaciones": 15148,
+      "edad_promedio": 45.8,
+      "experiencia_promedio": 16.5,
+      "certificaciones_promedio": 2.6,
+      "educacion_frecuente": "Profesional",
+      "ingles_frecuente": "Intermedio",
+      "tasa_seleccion": 32.3,
+      "tasa_retiro": 22,
+      "perfil_real_mayoritario": "Senior",
+      "coincidencia_perfil_real": 99.6
+    }
+  ]
+}

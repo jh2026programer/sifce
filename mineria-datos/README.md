@@ -6,9 +6,9 @@ SIFCE, con la herramienta **Orange Data Mining**.
 | Paso | Estado |
 |---|---|
 | 1. Recolección de datos | ✅ Dataset sintético de 100.000 registros (este documento) |
-| 2. Depuración de datos | Pendiente |
-| 3. Análisis de datos | Pendiente |
-| 4. Interpretación y resultados (gráficas) | Pendiente |
+| 2. Depuración de datos | ✅ Guía de Orange (abajo) y en código (`entrenar_modelo.js`) |
+| 3. Análisis de datos | ✅ Modelos, predicción y patrones, en Orange y en SIFCE |
+| 4. Interpretación y resultados (gráficas) | ✅ Gráficas en Orange y en la página **Minería de datos** de SIFCE |
 
 ## Objetivos de la minería
 
@@ -40,7 +40,10 @@ reduce. Esas reglas son las que la minería debe **descubrir** en los pasos 3 y 
 |---|---|
 | `datos/postulaciones_sifce.csv` | **El dataset.** Es el que se abre en Orange (100.000 filas, 30 columnas, UTF-8, separado por comas) |
 | `datos/control_calidad.csv` | Qué anomalía tiene cada fila y el perfil real del candidato. **No se usa en la minería**: sirve para comprobar después que la depuración y el clustering funcionaron |
-| `generar_dataset.js` | El programa que genera los dos archivos. Con la misma semilla produce siempre los mismos datos |
+| `datos/candidatos_nuevos.csv` | 30 postulaciones nuevas **sin resultado**, para que Orange las prediga (widget Predictions) |
+| `datos/candidatos_nuevos_resultado_real.csv` | Lo que de verdad pasó con esos 30, para comparar la predicción |
+| `generar_dataset.js` | El programa que genera los archivos de `datos/`. Con la misma semilla produce siempre los mismos datos |
+| `entrenar_modelo.js` | Depura, analiza, entrena el modelo y encuentra los perfiles; deja el resultado para la página de SIFCE |
 
 Para volver a generarlos, desde la raíz del proyecto:
 
@@ -189,3 +192,141 @@ Resultado esperado (comprobado con el motor de Orange 3.40 contra
 | Impute | 78.447 | ninguna fila; se rellenan unos 650 vacíos por columna |
 
 Ninguna fila limpia se pierde por error: las 68.161 limpias únicas llegan al final.
+
+## 3. Análisis de datos (en Orange)
+
+Se sigue en el mismo lienzo, a partir de la salida de **Impute**.
+
+### 3.1 Preparar los datos para predecir
+
+```
+Impute → Select Columns → Preprocess
+```
+
+- **Select Columns**: pasar a *Ignored* `estado_final`, `etapa_maxima`,
+  `dias_en_proceso` y `fecha_postulacion`. Las tres primeras solo se conocen al
+  final del proceso y delatan la respuesta: si se dejan, el modelo "acierta"
+  haciendo trampa. `seleccionado` queda como *Target*.
+- **Preprocess**: agregar **Normalize Features**. Los salarios están en
+  millones y la edad en decenas; sin normalizar, la regresión logística no
+  converge y rinde mucho peor (AUC 0,70 en vez de 0,83).
+
+### 3.2 Predicción: entrenar y comparar modelos
+
+```
+Preprocess ──→ Test and Score ──→ Confusion Matrix
+     │              ↑        └──→ ROC Analysis
+     │   Logistic Regression ─┤
+     │   Tree ────────────────┤
+     │   Random Forest ───────┘
+     └──→ Tree ──→ Tree Viewer
+```
+
+| Widget (grupo) | Cómo se conecta | Qué muestra |
+|---|---|---|
+| **Logistic Regression**, **Tree**, **Random Forest** (Model) | Cada uno a **Test and Score** | Los tres modelos a comparar |
+| **Test and Score** (Evaluate) | Data ← Preprocess | Exactitud (CA), AUC, precisión y recall con validación cruzada de 5 particiones |
+| **Confusion Matrix** (Evaluate) | ← Test and Score | Aciertos y errores del modelo elegido |
+| **ROC Analysis** (Evaluate) | ← Test and Score | Curva ROC de los tres modelos, target `Sí` |
+| **Tree Viewer** (Visualize) | Preprocess → Tree → Tree Viewer | Las reglas que sigue el árbol |
+
+Resultado esperado (comprobado con Orange 3.40):
+
+| Modelo | Exactitud (CA) | AUC |
+|---|---:|---:|
+| Logistic Regression | ≈ 82 % | ≈ 0,83 |
+| Random Forest | ≈ 81 % | ≈ 0,81 |
+| Tree | ≈ 81 % | ≈ 0,81 |
+
+Sin modelo (decir siempre "No") se acierta el 79 %, así que los modelos sí
+aprenden. El mejor es la regresión logística, el mismo tipo de modelo que usa
+la página de SIFCE.
+
+### 3.3 Predecir candidatos nuevos
+
+```
+File (candidatos_nuevos.csv) ──→ Predictions ──→ Data Table
+Preprocess → Random Forest ─────────↗
+Preprocess → Logistic Regression ───↗
+```
+
+1. Agregar un **segundo File** con `datos/candidatos_nuevos.csv`
+   (`id_postulacion` como *meta*).
+2. Conectarlo a **Predictions** (Evaluate) como *Data*.
+3. Conectar **Random Forest** y **Logistic Regression** (los que reciben datos de
+   Preprocess) a **Predictions**: Orange los entrena con las postulaciones
+   limpias y predice a los 30 nuevos.
+4. Predictions muestra, para cada candidato, si sería seleccionado y con qué
+   probabilidad. Comparar con `candidatos_nuevos_resultado_real.csv`: el Random
+   Forest acierta **27 de 30**.
+
+### 3.4 Gráficas del análisis
+
+| Widget (Visualize) | Configuración | Qué se ve |
+|---|---|---|
+| **Distributions** | Variable `nivel_compatibilidad`, *Split by* `seleccionado` | Con compatibilidad alta se selecciona al 37 %; con baja, casi a nadie |
+| **Box Plot** | Variable `compatibilidad`, *Subgroups* `seleccionado` | Los seleccionados tienen compatibilidad mucho más alta |
+| **Scatter Plot** | X `anios_experiencia`, Y `compatibilidad`, color `seleccionado` | Dónde se concentran los seleccionados |
+| **Distributions** | Variable `nivel_ingles`, *Split by* `seleccionado` (antes, Select Rows con sector = Tecnología) | En tecnología el inglés avanzado multiplica la selección |
+| **Pivot Table** (Transform) | Filas `sector`, columnas `seleccionado` | Selección por sector |
+
+### 3.5 Patrones de comportamiento: perfiles de candidato
+
+```
+Impute → Select Columns → k-Means → Scatter Plot / Distributions
+```
+
+- **Select Columns**: dejar como *Features* solo `edad`, `anios_experiencia`,
+  `nivel_educativo`, `nivel_ingles` y `certificaciones`, y `seleccionado` como
+  *Target* (k-Means no lo usa, pero sirve para colorear).
+- **k-Means** (Unsupervised): **k = 4**, con normalización.
+- **Scatter Plot**: X `edad`, Y `anios_experiencia`, color `Cluster`.
+- **Distributions**: variable `seleccionado`, *Split by* `Cluster`.
+
+Salen cuatro perfiles: recién egresados, en crecimiento, experimentados y
+personas en cambio de carrera (mucha edad, poca experiencia). Los
+experimentados son los más seleccionados (32 %) y los de cambio de carrera los
+que menos (6 %).
+
+## 4. Interpretación y resultados
+
+| Hallazgo | Evidencia |
+|---|---|
+| La **compatibilidad** que calcula SIFCE es lo que más decide | 37,5 % de selección con compatibilidad alta frente a 0,5 % con baja; es la variable de mayor peso |
+| Pedir **más del 30 %** sobre el salario ofrecido castiga | La selección baja de 23 % a 9 % y el retiro sube de 4 % a 43 % |
+| En **tecnología** el inglés avanzado pesa mucho | 41 % de selección con inglés avanzado frente a 11 % con básico |
+| Las **certificaciones** ayudan | 29 % de selección con 3 o más, frente a 16 % con menos |
+| Hay **temporadas** de postulación | Enero a marzo y julio-agosto concentran la demanda |
+| Existen **4 perfiles** de candidato | k-Means los separa sin conocerlos; los experimentados coinciden en 99,6 % con los seniors reales |
+| Se puede **predecir** la selección | Regresión logística con AUC entre 0,83 (Orange) y 0,87 (SIFCE); Random Forest acierta 27 de 30 candidatos nuevos |
+
+La predicción es una ayuda: acierta mucho al decir "No", pero se le escapan
+algunos seleccionados. Por eso en SIFCE la decisión final sigue siendo del
+reclutador.
+
+## La minería dentro de SIFCE
+
+La página **Minería de datos** (menú lateral del superadministrador, del
+administrador de empresa y del reclutador) muestra el proceso con gráficas y
+**predice** si un candidato sería seleccionado:
+
+| Pestaña | Contenido |
+|---|---|
+| 1. Depuración | Filas después de cada paso y qué se limpió |
+| 2. Análisis | Selección por compatibilidad, inglés por sector, aspiración salarial, embudo, postulaciones por mes y por sector; cada gráfica con su interpretación |
+| 3. Modelo y perfiles | Exactitud, AUC, curva ROC, matriz de confusión, peso de cada variable y los 4 perfiles de k-Means |
+| 4. Predecir candidato | Formulario con los datos del candidato → probabilidad de ser seleccionado y los factores que la suben o la bajan |
+
+Cómo funciona:
+
+- `entrenar_modelo.js` depura los datos con las mismas reglas de Orange,
+  entrena una **regresión logística** (70 % entrenamiento, 30 % prueba), hace
+  el **k-Means** y guarda todo en `whatever/services/mineria/modelo_seleccion.json`.
+- La API lo publica en `GET /api/v1/mineria/resumen` y predice en
+  `POST /api/v1/mineria/prediccion` (código en `whatever/services/mineria/`).
+- Para volver a entrenar después de cambiar los datos:
+
+```powershell
+node mineria-datos/generar_dataset.js
+node mineria-datos/entrenar_modelo.js
+```
