@@ -149,10 +149,13 @@ Con eso el paso 1 queda listo y comprobado en Orange.
 
 ## 2. Depuración de datos (en Orange)
 
+El diagrama completo ya armado está en **`diagrama_mineria_sifce.ows`** (abrirlo
+con *File → Open* en Orange) y su captura en `diagrama_orange.jpg`.
+
 Cadena de widgets, cada uno conectado al anterior:
 
 ```
-File → Unique → Edit Domain → Formula → Select Rows → Select Columns → Impute → Save Data
+File → Unique → Edit Domain → Formula → Select Rows → Select Columns → Impute → Unique (1) → Save Data
 ```
 
 | # | Widget (grupo) | Qué hace | Configuración |
@@ -162,8 +165,9 @@ File → Unique → Edit Domain → Formula → Select Rows → Select Columns �
 | 3 | **Formula** (Transform) | Marca los errores y los atípicos con dos columnas nuevas | Las dos expresiones de abajo |
 | 4 | **Select Rows** (Transform) | Elimina lo marcado | `dato_erroneo` is 0 · `valor_atipico` is 0 · `seleccionado` is defined |
 | 5 | **Select Columns** (Transform) | Quita las dos columnas auxiliares | Pasar `dato_erroneo` y `valor_atipico` a *Ignored* |
-| 6 | **Impute** (Transform) | Rellena los vacíos que quedan | *Average/Most frequent*: promedio en números, valor más frecuente en categorías |
-| 7 | **Save Data** (Data) | Guarda el dataset limpio | `datos/postulaciones_limpias.csv` |
+| 6 | **Impute** (Transform) | Rellena los vacíos que quedan | Marcar *Average/Most frequent* (promedio en números, valor más frecuente en categorías). **Ojo:** el widget trae marcado *Don't impute* por defecto |
+| 7 | **Unique (1)** (Transform) | Quita los duplicados que quedaban | Por defecto. Hace falta porque Orange no considera iguales dos celdas vacías: los duplicados de filas con vacíos pasan el primer Unique y solo se pueden quitar después de imputar |
+| 8 | **Save Data** (Data) | Guarda el dataset limpio | `datos/postulaciones_limpias.csv`, con *Autosave* |
 
 Expresión de `dato_erroneo` (Numeric):
 
@@ -187,9 +191,10 @@ Resultado esperado (comprobado con el motor de Orange 3.40 contra
 | Después de | Filas | Qué salió |
 |---|---:|---|
 | File | 100.000 | — |
-| Unique | 95.000 | los 5.000 duplicados |
-| Select Rows | 78.447 | errores numéricos y lógicos, atípicos, filas sin fecha y sin `seleccionado` |
-| Impute | 78.447 | ninguna fila; se rellenan unos 650 vacíos por columna |
+| Unique | 95.410 | 4.590 duplicados (los que no tienen celdas vacías) |
+| Select Rows | 78.774 | errores numéricos y lógicos, atípicos, filas sin fecha y sin `seleccionado` |
+| Impute | 78.774 | ninguna fila; se rellenan unos 650 vacíos por columna |
+| Unique (1) | **78.447** | los 327 duplicados que tenían celdas vacías |
 
 Ninguna fila limpia se pierde por error: las 68.161 limpias únicas llegan al final.
 
@@ -224,7 +229,7 @@ Preprocess ──→ Test and Score ──→ Confusion Matrix
 
 | Widget (grupo) | Cómo se conecta | Qué muestra |
 |---|---|---|
-| **Logistic Regression**, **Tree**, **Random Forest** (Model) | Cada uno a **Test and Score** | Los tres modelos a comparar |
+| **Logistic Regression**, **Tree**, **Random Forest** (Model) | Cada uno recibe *Preprocessed Data → Data* de Preprocess (si Orange propone *Preprocessor*, corregir el enlace) y se conecta a **Test and Score** | Los tres modelos a comparar. En **Tree** desmarcar *Induce binary tree* (`cargo` tiene 22 valores y el árbol binario acepta máximo 16) y limitar la profundidad a 6 |
 | **Test and Score** (Evaluate) | Data ← Preprocess | Exactitud (CA), AUC, precisión y recall con validación cruzada de 5 particiones |
 | **Confusion Matrix** (Evaluate) | ← Test and Score | Aciertos y errores del modelo elegido |
 | **ROC Analysis** (Evaluate) | ← Test and Score | Curva ROC de los tres modelos, target `Sí` |
@@ -234,9 +239,12 @@ Resultado esperado (comprobado con Orange 3.40):
 
 | Modelo | Exactitud (CA) | AUC |
 |---|---:|---:|
-| Logistic Regression | ≈ 82 % | ≈ 0,83 |
-| Random Forest | ≈ 81 % | ≈ 0,81 |
-| Tree | ≈ 81 % | ≈ 0,81 |
+| Logistic Regression | 82,4 % | 0,844 |
+| Tree | 81,5 % | 0,815 |
+| Random Forest | 80,8 % | 0,803 |
+
+Con *target* = `Sí`, la regresión logística tiene precisión 61,7 % y recall
+36,1 %.
 
 Sin modelo (decir siempre "No") se acierta el 79 %, así que los modelos sí
 aprenden. El mejor es la regresión logística, el mismo tipo de modelo que usa
@@ -251,14 +259,17 @@ Preprocess → Logistic Regression ───↗
 ```
 
 1. Agregar un **segundo File** con `datos/candidatos_nuevos.csv`
-   (`id_postulacion` como *meta*).
+   (`id_postulacion` como *meta*; `cargo` llega como *text/meta* por ser solo
+   30 filas: cambiarlo a *categorical / feature*).
 2. Conectarlo a **Predictions** (Evaluate) como *Data*.
 3. Conectar **Random Forest** y **Logistic Regression** (los que reciben datos de
    Preprocess) a **Predictions**: Orange los entrena con las postulaciones
    limpias y predice a los 30 nuevos.
 4. Predictions muestra, para cada candidato, si sería seleccionado y con qué
    probabilidad. Comparar con `candidatos_nuevos_resultado_real.csv`: el Random
-   Forest acierta **27 de 30**.
+   Forest acierta **27 de 30** y la regresión logística **26 de 30**. En
+   *Show probabilities for* elegir *Classes known to the model* para ver la
+   probabilidad de cada uno.
 
 ### 3.4 Gráficas del análisis
 
