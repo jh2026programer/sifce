@@ -130,7 +130,8 @@ async function listForVacancy(vacancyId) {
 async function rankingForVacancy(vacancyId) {
   const { rows } = await db.query(
     `SELECT a.id AS application_id, u.full_name AS candidate_name, a.status,
-            ai.overall_score, ai.status AS ai_status
+            ai.overall_score, ai.status AS ai_status,
+            (ai.selection_prediction->>'probabilidad')::numeric AS selection_probability
      FROM applications a
      JOIN candidate_profiles cp ON cp.id = a.candidate_id
      JOIN users u ON u.id = cp.user_id

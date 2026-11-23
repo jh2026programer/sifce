@@ -460,14 +460,73 @@ const PESTANAS = [
   ['predecir', '4. Predecir candidato'],
 ];
 
+// Líneas de la salida de los scripts que vale la pena mostrar en vivo.
+const LINEAS_CLAVE = /^(Filas|limpias|Seleccionados|Depuración|Quitadas|Perfiles)/;
+
+function EjecucionEnVivo({ ejecucion }) {
+  const { cargando, segundos, resultado, error } = ejecucion;
+  if (!cargando && !resultado && !error) return null;
+  return (
+    <div className="card">
+      <h3>Minería en vivo con los 100.000 registros</h3>
+      {cargando && (
+        <div className="loading-inline">
+          <span className="spinner" /> Recolectando, depurando, analizando y entrenando el modelo... {segundos} s
+        </div>
+      )}
+      {error && <Alert type="error">{error}</Alert>}
+      {resultado && (
+        <>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead><tr><th>Paso</th><th>Tiempo</th><th>Resultado</th></tr></thead>
+              <tbody>
+                {resultado.pasos.map((p) => (
+                  <tr key={p.paso}>
+                    <td><strong>{p.paso}</strong></td>
+                    <td>{p.segundos} s</td>
+                    <td style={{ fontSize: '0.8rem' }}>
+                      {p.salida.filter((l) => LINEAS_CLAVE.test(l)).map((l) => <div key={l}>{l}</div>)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Alert type="success">
+            Listo: el modelo se volvió a entrenar con los datos recién procesados (exactitud {resultado.resumen.modelo.metricas.exactitud} %,
+            AUC {resultado.resumen.modelo.metricas.auc}) y todas las gráficas se actualizaron. Las nuevas postulaciones usan este modelo.
+          </Alert>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function DataMiningPage() {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
   const [pestana, setPestana] = useState('depuracion');
+  const [ejecucion, setEjecucion] = useState({ cargando: false, segundos: 0, resultado: null, error: '' });
 
   useEffect(() => {
     mineriaApi.getMineriaResumen().then(setDatos).catch((e) => setError(e.message));
   }, []);
+
+  const ejecutar = async () => {
+    const inicio = Date.now();
+    setEjecucion({ cargando: true, segundos: 0, resultado: null, error: '' });
+    const reloj = setInterval(() => setEjecucion((e) => ({ ...e, segundos: Math.round((Date.now() - inicio) / 1000) })), 500);
+    try {
+      const resultado = await mineriaApi.ejecutarMineriaEnVivo();
+      setDatos(resultado.resumen);
+      setEjecucion({ cargando: false, segundos: 0, resultado, error: '' });
+    } catch (err) {
+      setEjecucion({ cargando: false, segundos: 0, resultado: null, error: err.message });
+    } finally {
+      clearInterval(reloj);
+    }
+  };
 
   if (error) return <Alert type="error">{error}</Alert>;
   if (!datos) return <Loading />;
@@ -482,7 +541,13 @@ export default function DataMiningPage() {
             (dataset sintético) y predicción con el modelo entrenado.
           </p>
         </div>
+        <button className="btn btn-primary" type="button" onClick={ejecutar} disabled={ejecucion.cargando}>
+          <IconTrendingUp size={16} />
+          {ejecucion.cargando ? 'Procesando...' : 'Ejecutar minería en vivo'}
+        </button>
       </div>
+
+      <EjecucionEnVivo ejecucion={ejecucion} />
 
       <div className="tabs-row">
         {PESTANAS.map(([clave, texto]) => (

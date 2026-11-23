@@ -128,10 +128,27 @@ function RankingTab({ vacancyId }) {
                 <Link to={`/applications/${r.application_id}`}>{r.candidate_name}</Link>
                 <StatusBadge status={r.status} />
               </div>
-              <div style={{ width: 200 }}><CompatibilityBar score={r.overall_score} /></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                <div style={{ width: 200 }}><CompatibilityBar score={r.overall_score} /></div>
+                <div style={{ minWidth: 150, textAlign: 'right' }} title="Probabilidad de ser seleccionado según el modelo de minería de datos">
+                  {r.selection_probability === null || r.selection_probability === undefined ? (
+                    <span className="muted">Predicción pendiente</span>
+                  ) : (
+                    <span className={`badge ${Number(r.selection_probability) >= 50 ? 'badge-active' : 'badge-draft'}`}>
+                      Selección: {Number(r.selection_probability) < 1 ? '< 1' : Number(r.selection_probability).toFixed(0)}%
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
+      )}
+      {ranking.length > 0 && (
+        <p className="muted" style={{ marginTop: 12, marginBottom: 0, fontSize: '0.82rem' }}>
+          <strong>Selección</strong> = probabilidad de ser seleccionado que calcula automáticamente el modelo de
+          minería de datos (entrenado con 100.000 postulaciones). Es una ayuda: la decisión es del reclutador.
+        </p>
       )}
     </div>
   );

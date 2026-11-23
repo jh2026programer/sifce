@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon --watch . --watch ../model server.js",
+    "dev": "nodemon --watch . --watch ../model --ignore services/mineria/modelo_seleccion.json server.js",
     "test": "jest --runInBand"
   },
   "dependencies": {

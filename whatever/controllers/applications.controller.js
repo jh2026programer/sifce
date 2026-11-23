@@ -133,6 +133,10 @@ const getApplicationDetail = asyncHandler(async (req, res) => {
     applicationModel.findStageHistory(req.params.id),
   ]);
 
+  // La predicción de selección es una ayuda para el reclutador: el
+  // candidato no ve su propia probabilidad de ser seleccionado.
+  if (aiAnalysis && req.user.role === 'candidate') delete aiAnalysis.selection_prediction;
+
   view.ok(res, { ...application, aiAnalysis, stageHistory });
 });
 

@@ -6,6 +6,8 @@ const aiResultModel = require('../../model/aiResult.model.js');
 const aiProvider = require('./ai/aiProvider');
 const metrics = require('./metrics');
 const microservicios = require('./microservicios');
+const companyModel = require('../../model/company.model.js');
+const mineriaService = require('./mineria/mineriaService');
 
 // Un proveedor de IA real podría devolver un valor fuera de rango; se acota a
 // 0-100 antes de enviarlo al microservicio, que rechaza puntajes inválidos.
@@ -73,6 +75,12 @@ async function runAnalysis({ applicationId }) {
     stopTimer();
     metrics.recordAiAnalysis('completed');
 
+    // Minería de datos: predicción automática de selección.
+    await guardarPrediccion({
+      applicationId, companyId: application.company_id, vacancy, candidateProfile,
+      skillsScore: result.skillsScore, overallScore,
+    });
+
     return { success: true, overallScore };
   } catch (err) {
     stopTimer();
@@ -82,4 +90,49 @@ async function runAnalysis({ applicationId }) {
   }
 }
 
-module.exports = { runAnalysis, getCategoryWeights };
+// --- Predicción automática de selección (minería de datos) --------------------------
+// Con la compatibilidad ya calculada, el modelo entrenado con 100.000
+// postulaciones estima la probabilidad de que el candidato sea seleccionado.
+// Si algo falla, el análisis sigue siendo válido: solo queda sin predicción.
+async function guardarPrediccion({ applicationId, companyId, vacancy, candidateProfile, skillsScore, overallScore }) {
+  try {
+    const empresa = await companyModel.findById(companyId);
+    const prediccion = mineriaService.predecirPostulacion({
+      sectorEmpresa: empresa && empresa.sector,
+      vacante: vacancy,
+      perfil: candidateProfile,
+      resultadoIa: { skillsScore },
+      compatibilidad: overallScore,
+    });
+    await aiResultModel.savePrediction(applicationId, prediccion);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[mineria] No se pudo predecir la postulación ${applicationId}: ${err.message}`);
+  }
+}
+
+// Calcula la predicción de los análisis que ya estaban hechos y no la tienen
+// (por ejemplo, los anteriores a esta función). Se ejecuta al arrancar la API.
+async function completarPrediccionesPendientes() {
+  await aiResultModel.ensurePredictionColumn();
+  const pendientes = await aiResultModel.listCompletedWithoutPrediction();
+  for (const applicationId of pendientes) {
+    /* eslint-disable no-await-in-loop */
+    const application = await applicationModel.findForAnalysis(applicationId);
+    const ai = await aiResultModel.findByApplicationId(applicationId);
+    if (application && ai) {
+      await guardarPrediccion({
+        applicationId,
+        companyId: application.company_id,
+        vacancy: await vacancyModel.findById(application.vacancy_id),
+        candidateProfile: await candidateModel.findAnalysisBundle(application.candidate_id),
+        skillsScore: ai.skills_score,
+        overallScore: ai.overall_score,
+      });
+    }
+    /* eslint-enable no-await-in-loop */
+  }
+  return pendientes.length;
+}
+
+module.exports = { runAnalysis, getCategoryWeights, completarPrediccionesPendientes };

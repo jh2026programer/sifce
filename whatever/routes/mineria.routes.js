@@ -10,5 +10,6 @@ router.use(authenticate, authorize('superadmin', 'company_admin', 'recruiter'));
 
 router.get('/resumen', ctrl.getResumen);
 router.post('/prediccion', ctrl.predecir);
+router.post('/ejecutar', ctrl.ejecutarEnVivo);
 
 module.exports = router;

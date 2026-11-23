@@ -13,7 +13,7 @@ async function resetToPending(executor, applicationId) {
   await executor.query(
     `UPDATE ai_analysis_results SET status = 'pending', overall_score = NULL, education_score = NULL,
        experience_score = NULL, skills_score = NULL, languages_score = NULL, strengths = '[]', gaps = '[]',
-       explanation = NULL, raw_extracted_profile = NULL, error_message = NULL, completed_at = NULL
+       explanation = NULL, raw_extracted_profile = NULL, selection_prediction = NULL, error_message = NULL, completed_at = NULL
      WHERE application_id = $1`,
     [applicationId]
   );
@@ -52,6 +52,30 @@ async function saveCompleted(applicationId, { provider, overallScore, result }) 
   );
 }
 
+// Predicción automática de selección (minería de datos), calculada al
+// terminar el análisis. Se guarda aparte para poder recalcularla sola.
+async function savePrediction(applicationId, prediction) {
+  await db.query('UPDATE ai_analysis_results SET selection_prediction = $2 WHERE application_id = $1', [
+    applicationId,
+    JSON.stringify(prediction),
+  ]);
+}
+
+// Análisis completados que todavía no tienen predicción (por ejemplo, los
+// hechos antes de que existiera la predicción automática).
+async function listCompletedWithoutPrediction() {
+  const { rows } = await db.query(
+    `SELECT application_id FROM ai_analysis_results WHERE status = 'completed' AND selection_prediction IS NULL`
+  );
+  return rows.map((r) => r.application_id);
+}
+
+// La base no tiene migraciones: si fue creada antes de esta columna, se
+// agrega sola al arrancar la API (no borra ni cambia ningún dato).
+async function ensurePredictionColumn() {
+  await db.query('ALTER TABLE ai_analysis_results ADD COLUMN IF NOT EXISTS selection_prediction JSONB');
+}
+
 async function markFailed(applicationId, errorMessage) {
   await db.query(
     `UPDATE ai_analysis_results SET status = 'failed', error_message = $2 WHERE application_id = $1`,
@@ -59,4 +83,7 @@ async function markFailed(applicationId, errorMessage) {
   );
 }
 
-module.exports = { createPending, resetToPending, findByApplicationId, markProcessing, saveCompleted, markFailed };
+module.exports = {
+  createPending, resetToPending, findByApplicationId, markProcessing, saveCompleted, markFailed,
+  savePrediction, listCompletedWithoutPrediction, ensurePredictionColumn,
+};

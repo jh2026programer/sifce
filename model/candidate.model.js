@@ -55,12 +55,13 @@ async function findFullProfile(candidateId) {
 
 // Datos del perfil que recibe el módulo de IA para el análisis (RF09).
 async function findAnalysisBundle(candidateId) {
-  const [profileRes, educationRes, experienceRes, skillsRes, languagesRes] = await Promise.all([
+  const [profileRes, educationRes, experienceRes, skillsRes, languagesRes, certificationsRes] = await Promise.all([
     db.query('SELECT * FROM candidate_profiles WHERE id = $1', [candidateId]),
     db.query('SELECT * FROM candidate_education WHERE candidate_id = $1', [candidateId]),
     db.query('SELECT * FROM candidate_experience WHERE candidate_id = $1', [candidateId]),
     db.query('SELECT * FROM candidate_skills WHERE candidate_id = $1', [candidateId]),
     db.query('SELECT * FROM candidate_languages WHERE candidate_id = $1', [candidateId]),
+    db.query('SELECT * FROM candidate_certifications WHERE candidate_id = $1', [candidateId]),
   ]);
 
   return {
@@ -69,6 +70,7 @@ async function findAnalysisBundle(candidateId) {
     experience: experienceRes.rows,
     skills: skillsRes.rows,
     languages: languagesRes.rows,
+    certifications: certificationsRes.rows,
   };
 }
 

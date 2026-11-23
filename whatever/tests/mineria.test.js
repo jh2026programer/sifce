@@ -51,6 +51,42 @@ describe('Resultados de la minería', () => {
   });
 });
 
+describe('Predicción automática en cada postulación', () => {
+  test('el ranking trae la probabilidad de selección calculada al analizar', async () => {
+    const vacantes = (await api(t.recruiter).get('/vacancies')).body.data;
+    let ranking = [];
+    for (const v of vacantes) {
+      // eslint-disable-next-line no-await-in-loop
+      ranking = (await api(t.recruiter).get(`/applications/vacancy/${v.id}/ranking`)).body.data;
+      if (ranking.length) break;
+    }
+    expect(ranking.length).toBeGreaterThan(0);
+    for (const fila of ranking) {
+      expect(Number(fila.selection_probability)).toBeGreaterThanOrEqual(0);
+      expect(Number(fila.selection_probability)).toBeLessThanOrEqual(100);
+    }
+
+    const detalle = (await api(t.recruiter).get(`/applications/${ranking[0].application_id}`)).body.data;
+    const pred = detalle.aiAnalysis.selection_prediction;
+    expect(['Sí', 'No']).toContain(pred.seleccionado);
+    expect(pred.supuestos).toEqual(expect.arrayContaining([expect.stringMatching(/Edad/)]));
+  });
+
+  test('el candidato no ve su propia probabilidad de selección', async () => {
+    const empresas = (await api(t.maria).get('/candidates/me/companies')).body.data;
+    const technova = empresas.find((c) => /TechNova/.test(c.name)).id;
+    const mias = (await api(t.maria, technova).get('/applications/mine')).body.data;
+    expect(mias.length).toBeGreaterThan(0);
+    const detalle = (await api(t.maria, technova).get(`/applications/${mias[0].id}`)).body.data;
+    expect(detalle.aiAnalysis).toBeTruthy();
+    expect(detalle.aiAnalysis.selection_prediction).toBeUndefined();
+  });
+
+  test('ejecutar la minería en vivo no está permitido para el candidato', async () => {
+    expect((await api(t.maria).post('/mineria/ejecutar', {})).status).toBe(403);
+  });
+});
+
 describe('Predicción de selección', () => {
   test('un candidato muy compatible tiene alta probabilidad y explica por qué', async () => {
     const res = await api(t.recruiter).post('/mineria/prediccion', CANDIDATO);

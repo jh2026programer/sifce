@@ -8,6 +8,38 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import CompatibilityBar from '../components/CompatibilityBar.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 
+// Minería de datos: probabilidad de selección calculada automáticamente al
+// terminar el análisis (solo la ven el reclutador y el administrador).
+function PrediccionSeleccion({ prediccion: p }) {
+  const si = p.seleccionado === 'Sí';
+  return (
+    <div className="card">
+      <h3>Predicción automática de selección (minería de datos)</h3>
+      <div className="grid-2">
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2.6rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: si ? 'var(--color-accent)' : 'var(--color-danger)' }}>
+            {p.probabilidad < 1 ? '< 1' : p.probabilidad}%
+          </div>
+          <div className="muted">probabilidad de ser seleccionado</div>
+          <span className={`badge ${si ? 'badge-active' : 'badge-inactive'}`} style={{ marginTop: 8, display: 'inline-block' }}>
+            {si ? 'El modelo predice que sería seleccionado' : 'El modelo predice que no sería seleccionado'}
+          </span>
+        </div>
+        <div>
+          <h4 style={{ fontSize: '0.85rem', color: 'var(--color-success)' }}>Lo que la sube</h4>
+          {p.suben.length === 0 ? <p className="muted">Nada destacable.</p> : p.suben.map((f) => <div className="strength-item" key={f.factor}>✓ {f.factor}</div>)}
+          <h4 style={{ fontSize: '0.85rem', color: 'var(--color-danger)', marginTop: 12 }}>Lo que la baja</h4>
+          {p.bajan.length === 0 ? <p className="muted">Nada destacable.</p> : p.bajan.map((f) => <div className="gap-item" key={f.factor}>✕ {f.factor}</div>)}
+        </div>
+      </div>
+      <p className="muted" style={{ marginTop: 14, marginBottom: 0, fontSize: '0.8rem' }}>
+        Modelo: {p.modelo.tipo} entrenado con 100.000 postulaciones (exactitud {p.modelo.exactitud} %, AUC {p.modelo.auc}).
+        {' '}{p.supuestos.join(' ')} Es una ayuda: la decisión final es del reclutador.
+      </p>
+    </div>
+  );
+}
+
 const NON_WITHDRAWABLE = ['retirado', 'seleccionado'];
 
 export default function ApplicationDetailPage() {
@@ -133,6 +165,10 @@ export default function ApplicationDetailPage() {
           )}
         </div>
       </div>
+
+      {user.role !== 'candidate' && ai?.status === 'completed' && ai.selection_prediction && (
+        <PrediccionSeleccion prediccion={ai.selection_prediction} />
+      )}
 
       <div className="card">
         <h3>Historial del proceso de selección (RF13)</h3>

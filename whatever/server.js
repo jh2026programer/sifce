@@ -5,8 +5,21 @@ require('./instrumentation');
 const config = require('./config/env');
 const app = require('./app');
 const aiProvider = require('./services/ai/aiProvider');
+const { completarPrediccionesPendientes } = require('./services/compatibilityService');
 
 app.listen(config.port, () => {
+  // Minería de datos: asegura la columna de predicción y calcula la de las
+  // postulaciones que ya estaban analizadas (no bloquea el arranque).
+  completarPrediccionesPendientes()
+    .then((n) => {
+      // eslint-disable-next-line no-console
+      if (n > 0) console.log(`[SIFCE] Predicción de selección calculada para ${n} postulación(es) existente(s).`);
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.warn(`[SIFCE] No se pudieron completar las predicciones pendientes: ${err.message}`);
+    });
+
   // eslint-disable-next-line no-console
   console.log(`[SIFCE] API escuchando en http://localhost:${config.port}/api/v1 (entorno: ${config.nodeEnv})`);
 

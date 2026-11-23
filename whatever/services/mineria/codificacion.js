@@ -36,24 +36,32 @@ const num = (v) => (v === '' || v === null || v === undefined ? NaN : Number(v))
 //   experiencia_requerida, habilidades_requeridas, habilidades_cumplidas,
 //   nivel_ingles, certificaciones, salario_ofrecido, salario_aspirado,
 //   compatibilidad }  →  arreglo de números en el orden de VARIABLES.
+// Un dato desconocido (vacío o fuera de las opciones) queda como NaN; quien
+// predice lo reemplaza por el promedio del entrenamiento, así no empuja la
+// probabilidad ni hacia arriba ni hacia abajo.
+const posicion = (lista, valor) => (lista.includes(valor) ? lista.indexOf(valor) : NaN);
+
 function vectorizar(e) {
-  const ingles = INGLES.indexOf(e.nivel_ingles);
+  const ingles = posicion(INGLES, e.nivel_ingles);
+  const sectorConocido = SECTORES.includes(e.sector);
   const brecha = num(e.salario_aspirado) / num(e.salario_ofrecido) - 1;
   const valores = {
     compatibilidad: num(e.compatibilidad),
     cobertura_habilidades: (num(e.habilidades_cumplidas) / num(e.habilidades_requeridas)) * 100,
     nivel_ingles: ingles,
-    ingles_avanzado_tecnologia: e.sector === 'Tecnología' && ingles >= 3 ? 1 : 0,
-    nivel_educativo: EDUCACION.indexOf(e.nivel_educativo),
+    ingles_avanzado_tecnologia:
+      !sectorConocido || Number.isNaN(ingles) ? NaN : e.sector === 'Tecnología' && ingles >= 3 ? 1 : 0,
+    nivel_educativo: posicion(EDUCACION, e.nivel_educativo),
     anios_experiencia: num(e.anios_experiencia),
     experiencia_requerida: num(e.experiencia_requerida),
     certificaciones: num(e.certificaciones),
     edad: num(e.edad),
     brecha_salarial: brecha * 100,
-    pide_mas_30: brecha > 0.3 ? 1 : 0,
+    pide_mas_30: Number.isNaN(brecha) ? NaN : brecha > 0.3 ? 1 : 0,
   };
-  SECTORES.forEach((s) => { valores[`sector_${s}`] = e.sector === s ? 1 : 0; });
-  MODALIDADES.forEach((m) => { valores[`modalidad_${m}`] = e.modalidad === m ? 1 : 0; });
+  SECTORES.forEach((s) => { valores[`sector_${s}`] = sectorConocido ? (e.sector === s ? 1 : 0) : NaN; });
+  const modalidadConocida = MODALIDADES.includes(e.modalidad);
+  MODALIDADES.forEach((m) => { valores[`modalidad_${m}`] = modalidadConocida ? (e.modalidad === m ? 1 : 0) : NaN; });
   return VARIABLES.map((v) => valores[v.nombre]);
 }
 

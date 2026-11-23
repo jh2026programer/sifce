@@ -18,4 +18,15 @@ const predecir = asyncHandler(async (req, res) => {
   view.ok(res, mineriaService.predecir(req.body));
 });
 
-module.exports = { getResumen, predecir };
+// Minería en vivo: genera los 100.000 registros, los depura, entrena el
+// modelo y recalcula los resultados en ese momento (unos 10 segundos).
+const ejecutarEnVivo = asyncHandler(async (req, res) => {
+  if (!mineriaService.mineriaEnVivoDisponible()) {
+    throw new AppError('La minería en vivo solo está disponible ejecutando SIFCE desde el proyecto (npm run dev:api).', 503);
+  }
+  const resultado = await mineriaService.ejecutarEnVivo();
+  if (resultado.ocupado) throw new AppError('La minería ya se está ejecutando. Espera a que termine.', 409);
+  view.ok(res, resultado);
+});
+
+module.exports = { getResumen, predecir, ejecutarEnVivo };

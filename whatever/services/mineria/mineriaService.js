@@ -8,12 +8,19 @@
 //   - predecir():  la probabilidad de que un candidato sea seleccionado y los
 //                  factores que más la suben o la bajan.
 // ============================================================================
+const fs = require('fs');
+const path = require('path');
+const { execFile } = require('child_process');
 const { SECTORES, MODALIDADES, EDUCACION, INGLES, vectorizar } = require('./codificacion');
 
+const ARCHIVO_MODELO = path.join(__dirname, 'modelo_seleccion.json');
+const RAIZ = path.resolve(__dirname, '..', '..', '..');
+
+// Se lee del disco (no con require) para poder recargarlo después de
+// ejecutar la minería en vivo sin reiniciar la API.
 let modelo = null;
 function cargar() {
-  // eslint-disable-next-line global-require
-  if (!modelo) modelo = require('./modelo_seleccion.json');
+  if (!modelo) modelo = JSON.parse(fs.readFileSync(ARCHIVO_MODELO, 'utf8'));
   return modelo;
 }
 
@@ -80,12 +87,15 @@ function validar(e) {
 }
 
 // --- Predicción -----------------------------------------------------------------
+// Un dato desconocido (NaN) se reemplaza por el promedio del entrenamiento:
+// su aporte es 0, no sube ni baja la probabilidad.
 function predecir(entrada) {
   const m = cargar();
   const x = vectorizar(entrada);
   let z = m.modelo.intercepto;
   const aportes = {};
   m.modelo.variables.forEach((v, j) => {
+    if (Number.isNaN(x[j])) return;
     const aporte = v.coeficiente * ((x[j] - v.media) / v.desviacion);
     z += aporte;
     // Sector y modalidad se muestran como un solo factor cada uno.
@@ -111,4 +121,143 @@ function predecir(entrada) {
   };
 }
 
-module.exports = { resumen, validar, predecir, OPCIONES };
+// --- Predicción automática a partir de una postulación real de SIFCE ----------------
+const normalizar = (t) => (t || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+const SECTOR_POR_PALABRA = [
+  ['tecnolog', 'Tecnología'], ['software', 'Tecnología'], ['sistemas', 'Tecnología'],
+  ['retail', 'Retail'], ['comercio', 'Retail'], ['ventas', 'Retail'],
+  ['salud', 'Salud'], ['clinic', 'Salud'], ['hospital', 'Salud'],
+  ['financ', 'Finanzas'], ['banc', 'Finanzas'], ['seguro', 'Finanzas'],
+  ['manufactur', 'Manufactura'], ['industri', 'Manufactura'], ['produccion', 'Manufactura'],
+  ['educa', 'Educación'], ['colegio', 'Educación'], ['universidad', 'Educación'],
+  ['logist', 'Logística'], ['transporte', 'Logística'],
+];
+function sectorDe(texto) {
+  const t = normalizar(texto);
+  const par = SECTOR_POR_PALABRA.find(([palabra]) => t.includes(palabra));
+  return par ? par[1] : null;
+}
+
+// El nivel educativo más alto según los títulos que registró el candidato.
+function educacionDe(registros) {
+  const niveles = (registros || []).map((r) => {
+    const t = normalizar(`${r.degree} ${r.field_of_study || ''}`);
+    if (/maestr|magister|master/.test(t)) return 5;
+    if (/especializ/.test(t)) return 4;
+    if (/tecnolog/.test(t)) return 2;
+    if (/tecnic/.test(t)) return 1;
+    if (/bachiller/.test(t)) return 0;
+    return 3; // ingeniería, licenciatura, administración...: profesional
+  });
+  return niveles.length ? EDUCACION[Math.max(...niveles)] : null;
+}
+
+function inglesDe(idiomas) {
+  const ingles = (idiomas || []).find((l) => /ingl|english/.test(normalizar(l.language)));
+  if (!ingles) return 'Ninguno';
+  const nivel = normalizar(ingles.level);
+  if (nivel.includes('nativ')) return 'Nativo';
+  if (nivel.includes('avanz')) return 'Avanzado';
+  if (nivel.includes('intermed')) return 'Intermedio';
+  if (nivel.includes('basic')) return 'Básico';
+  return 'Ninguno';
+}
+
+// "$3.500.000 - $5.000.000 COP" → 4.250.000 (promedio de los valores del texto).
+function salarioDe(texto) {
+  const valores = (texto || '').match(/\d[\d.,]*/g) || [];
+  const numeros = valores.map((v) => Number(v.replace(/[.,]/g, ''))).filter((n) => n >= 100000);
+  return numeros.length ? numeros.reduce((a, b) => a + b, 0) / numeros.length : NaN;
+}
+
+const MODALIDAD = { remoto: 'Remoto', hibrido: 'Híbrido', presencial: 'Presencial' };
+
+// Arma la entrada del modelo con lo que SIFCE sabe de la postulación. Lo que
+// SIFCE no registra (edad, salario aspirado) queda desconocido y se informa.
+function entradaDesdePostulacion({ sectorEmpresa, vacante, perfil, resultadoIa, compatibilidad }) {
+  const supuestos = [
+    'Edad: SIFCE no la registra; no influye en la predicción.',
+    'Salario aspirado: SIFCE no lo registra; se asume que el candidato acepta lo ofrecido.',
+  ];
+  const sector = sectorDe(sectorEmpresa);
+  if (!sector) supuestos.push(`Sector "${sectorEmpresa || 'sin definir'}" no reconocido; no influye en la predicción.`);
+  const educacion = educacionDe(perfil.education);
+  if (!educacion) supuestos.push('Sin formación registrada; el nivel educativo no influye en la predicción.');
+  const salarioOfrecido = salarioDe(vacante.salary);
+
+  return {
+    entrada: {
+      sector,
+      modalidad: MODALIDAD[normalizar(vacante.modality)] || null,
+      edad: NaN,
+      nivel_educativo: educacion,
+      anios_experiencia: (perfil.experience || []).reduce((suma, e) => suma + (Number(e.years) || 0), 0),
+      experiencia_requerida: Number(vacante.min_experience_years) || 0,
+      // El puntaje de habilidades de la IA ya es el % de habilidades cumplidas.
+      habilidades_requeridas: 100,
+      habilidades_cumplidas: Number(resultadoIa.skillsScore),
+      nivel_ingles: inglesDe(perfil.languages),
+      certificaciones: (perfil.certifications || []).length,
+      salario_ofrecido: salarioOfrecido,
+      // Sin salario aspirado se asume que acepta lo ofrecido (brecha 0).
+      salario_aspirado: salarioOfrecido,
+      compatibilidad: Number(compatibilidad),
+    },
+    supuestos,
+  };
+}
+
+function predecirPostulacion(datos) {
+  const { entrada, supuestos } = entradaDesdePostulacion(datos);
+  return { ...predecir(entrada), supuestos, calculada: new Date().toISOString() };
+}
+
+// --- Minería en vivo: recolección + depuración + análisis con los 100.000 datos ----
+const SCRIPTS = [
+  { paso: 'Recolección: generar 100.000 postulaciones', script: 'mineria-datos/generar_dataset.js' },
+  { paso: 'Depuración, análisis y entrenamiento del modelo', script: 'mineria-datos/entrenar_modelo.js' },
+];
+let ejecutando = false;
+
+function correr(script) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      process.execPath,
+      [path.join(RAIZ, script)],
+      { cwd: RAIZ, timeout: 180000, maxBuffer: 1024 * 1024 },
+      (err, stdout, stderr) => (err ? reject(new Error(stderr || err.message)) : resolve(stdout))
+    );
+  });
+}
+
+// En la imagen de Docker no van los scripts de minería: ahí no se puede ejecutar en vivo.
+function mineriaEnVivoDisponible() {
+  return SCRIPTS.every((s) => fs.existsSync(path.join(RAIZ, s.script)));
+}
+
+async function ejecutarEnVivo() {
+  if (ejecutando) return { ocupado: true };
+  ejecutando = true;
+  try {
+    const pasos = [];
+    for (const { paso, script } of SCRIPTS) {
+      const inicio = Date.now();
+      // eslint-disable-next-line no-await-in-loop
+      const salida = await correr(script);
+      // Sin los códigos de color de la consola (\x1b[33m...), que en la página se verían como basura.
+      // eslint-disable-next-line no-control-regex
+      const limpia = salida.replace(/\x1b\[[0-9;]*m/g, '').trim().split('\n');
+      pasos.push({ paso, segundos: Math.round((Date.now() - inicio) / 100) / 10, salida: limpia });
+    }
+    modelo = null; // vuelve a leer el modelo recién entrenado
+    return { pasos, resumen: resumen() };
+  } finally {
+    ejecutando = false;
+  }
+}
+
+module.exports = {
+  resumen, validar, predecir, OPCIONES, predecirPostulacion, entradaDesdePostulacion,
+  ejecutarEnVivo, mineriaEnVivoDisponible,
+};

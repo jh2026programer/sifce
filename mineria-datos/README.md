@@ -328,6 +328,25 @@ administrador de empresa y del reclutador) muestra el proceso con gráficas y
 | 3. Modelo y perfiles | Exactitud, AUC, curva ROC, matriz de confusión, peso de cada variable y los 4 perfiles de k-Means |
 | 4. Predecir candidato | Formulario con los datos del candidato → probabilidad de ser seleccionado y los factores que la suben o la bajan |
 
+Además, la predicción es **automática**:
+
+- **En cada postulación:** cuando SIFCE termina el análisis de IA de una
+  postulación, el modelo calcula solo la probabilidad de que el candidato sea
+  seleccionado (`compatibilityService.guardarPrediccion`). El reclutador la ve
+  en el **ranking** de la vacante ("Selección: 89 %") y en una tarjeta del
+  detalle de la postulación, con lo que la sube y lo que la baja. El candidato
+  no la ve. SIFCE no guarda la edad ni el salario aspirado: esos dos datos se
+  tratan como neutros y se informa en la tarjeta. Se guarda en
+  `ai_analysis_results.selection_prediction` (la API agrega la columna sola al
+  arrancar y calcula la de las postulaciones que ya existían).
+- **Minería en vivo:** el botón **Ejecutar minería en vivo** de la página
+  vuelve a generar los 100.000 registros, los depura, entrena el modelo y
+  actualiza las gráficas en unos 15 segundos (`POST /api/v1/mineria/ejecutar`).
+  Solo funciona ejecutando SIFCE desde el proyecto (`npm run dev:api`), no en
+  Docker.
+
+Guion de la presentación en vivo: [`GUIA_PRESENTACION.md`](GUIA_PRESENTACION.md).
+
 Cómo funciona:
 
 - `entrenar_modelo.js` depura los datos con las mismas reglas de Orange,

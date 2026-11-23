@@ -292,6 +292,7 @@ CREATE TABLE ai_analysis_results (
     gaps                    JSONB NOT NULL DEFAULT '[]',
     explanation             TEXT,
     raw_extracted_profile   JSONB,                 -- lo que la IA extrajo del CV
+    selection_prediction    JSONB,                 -- predicción automática de selección (minería de datos)
     error_message           TEXT,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at            TIMESTAMPTZ
