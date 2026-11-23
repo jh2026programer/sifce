@@ -103,6 +103,9 @@ function predecir(entrada) {
     if (v.nombre.startsWith('sector_')) clave = 'Sector';
     else if (v.nombre.startsWith('modalidad_')) clave = 'Modalidad';
     else if (v.etiquetaNo && x[j] === 0) clave = v.etiquetaNo;
+    // "Inglés avanzado en tecnología" solo se explica en vacantes de
+    // tecnología; en otros sectores su aporte cuenta, pero no se lista.
+    if (v.nombre === 'ingles_avanzado_tecnologia' && entrada.sector !== 'Tecnología') return;
     aportes[clave] = (aportes[clave] || 0) + aporte;
   });
   const probabilidad = 1 / (1 + Math.exp(-z));
