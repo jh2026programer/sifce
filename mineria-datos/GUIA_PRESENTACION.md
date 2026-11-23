@@ -6,6 +6,9 @@ los 100.000 registros, las gráficas y la predicción automática dentro de SIFC
 ## Antes de empezar (5 minutos antes)
 
 1. Abrir **Orange** → *File → Open* → `mineria-datos\diagrama_mineria_sifce.ows`.
+   Al abrirlo, las líneas salen punteadas (sin datos): Orange no carga solo un
+   archivo tan grande. Cerrar los avisos de actualización y de estadísticas
+   (*Don't show again*).
 2. Abrir dos terminales de PowerShell en la carpeta `sifce`:
    - `npm run dev:api`
    - `npm run dev:web`
@@ -35,8 +38,11 @@ los 100.000 registros, las gráficas y la predicción automática dentro de SIFC
 
 ### 3. Depuración en vivo (2 minutos) · Orange
 
-- En **File** presionar **Reload**: los 100.000 registros vuelven a recorrer el
-  diagrama.
+- Doble clic en **File** → presionar **Reload**: los 100.000 registros
+  recorren el diagrama y las líneas pasan de punteadas a continuas (Orange
+  tarda alrededor de 1 minuto en recalcular todo). Bajar en la lista de
+  columnas y comprobar que `seleccionado` diga **target**; si no, cambiarlo y
+  presionar *Apply*.
 - Pasar el mouse por cada widget y mostrar la cantidad de filas:
 
 | Widget | Filas | Qué hizo |
@@ -72,7 +78,9 @@ Abrir cada widget con clic derecho → *Open*:
 1. Como reclutador, ir a **Minería de datos** y presionar **Ejecutar minería en
    vivo**.
    > "SIFCE procesa ahora mismo los 100.000 registros: los genera, los depura y
-   > vuelve a entrenar el modelo, en unos 15 segundos."
+   > vuelve a entrenar el modelo."
+
+   Tarda entre 15 y 40 segundos (más si Orange está abierto al mismo tiempo).
 2. Mostrar las pestañas **Análisis** y **Modelo y perfiles** (las gráficas se
    actualizaron).
 3. En la ventana de **Laura**: *Explorar vacantes* → postularse a
